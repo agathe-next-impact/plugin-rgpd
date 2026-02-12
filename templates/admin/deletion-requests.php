@@ -25,7 +25,10 @@ if ( $status_filter ) {
 	);
 } else {
 	$requests = $wpdb->get_results(
-		"SELECT * FROM {$wpdb->prefix}omniprivacy_deletion_requests ORDER BY created_at DESC LIMIT 50"
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}omniprivacy_deletion_requests ORDER BY created_at DESC LIMIT %d",
+			50
+		)
 	);
 }
 ?>

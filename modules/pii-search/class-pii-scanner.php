@@ -89,7 +89,10 @@ class OmniPrivacy_PII_Scanner {
 
 		// Nettoyer les résultats précédents (sauf ignorés et anonymisés).
 		$wpdb->query(
-			"DELETE FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = 'active'"
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = %s",
+				'active'
+			)
 		);
 
 		// Invalider le cache transient.
@@ -254,7 +257,10 @@ class OmniPrivacy_PII_Scanner {
 
 		global $wpdb;
 		$found = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = 'active'"
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = %s",
+				'active'
+			)
 		);
 
 		$progress['step']      = $step;
@@ -283,7 +289,10 @@ class OmniPrivacy_PII_Scanner {
 			$progress['status']       = 'complete';
 			$progress['completed_at'] = current_time( 'mysql' );
 			$progress['found']        = (int) $wpdb->get_var(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = 'active'"
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = %s",
+					'active'
+				)
 			);
 			set_transient( 'omniprivacy_scan_progress_' . $scan_id, $progress, HOUR_IN_SECONDS );
 		}
@@ -303,10 +312,22 @@ class OmniPrivacy_PII_Scanner {
 	private function count_total_items() {
 		global $wpdb;
 
-		$posts    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status != 'auto-draft' AND post_type NOT IN ('revision','attachment')" );
-		$postmeta = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_value != '' AND meta_value IS NOT NULL" );
-		$comments = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments}" );
-		$media    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'" );
+		$posts    = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_status != %s AND post_type NOT IN (%s, %s)",
+				'auto-draft',
+				'revision',
+				'attachment'
+			)
+		);
+		$postmeta = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_value != '' AND meta_value IS NOT NULL" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- static query, no user input.
+		$comments = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->comments}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- static query, no user input.
+		$media    = (int) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = %s",
+				'attachment'
+			)
+		);
 
 		$total = $posts + $postmeta + $comments + $media;
 

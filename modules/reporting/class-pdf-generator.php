@@ -70,10 +70,13 @@ class OmniPrivacy_PDF_Generator {
 
 		// Demandes traitées.
 		$requests = $wpdb->get_results(
-			"SELECT id, user_email, status, created_at, processed_at
-			FROM {$wpdb->prefix}omniprivacy_deletion_requests
-			ORDER BY created_at DESC
-			LIMIT 50"
+			$wpdb->prepare(
+				"SELECT id, user_email, status, created_at, processed_at
+				FROM {$wpdb->prefix}omniprivacy_deletion_requests
+				ORDER BY created_at DESC
+				LIMIT %d",
+				50
+			)
 		);
 
 		return array(
@@ -136,13 +139,7 @@ class OmniPrivacy_PDF_Generator {
 	 */
 	private function render_report_html( $data ) {
 		ob_start();
-		$template = OMNIPRIVACY_PLUGIN_DIR . 'templates/admin/report-preview.php';
-		if ( file_exists( $template ) ) {
-			$is_pdf = true;
-			include $template;
-		} else {
-			$this->render_default_report( $data );
-		}
+		$this->render_default_report( $data );
 		return ob_get_clean();
 	}
 

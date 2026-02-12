@@ -11,9 +11,9 @@ global $wpdb;
 
 // Données du tableau de bord.
 $last_scan     = get_option( 'omniprivacy_last_scan_date', '' );
-$active_pii    = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = 'active'" );
-$pending_reqs  = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_deletion_requests WHERE status = 'pending'" );
-$total_cleaned = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_audit_log WHERE action = 'comment_anonymization'" );
+$active_pii    = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results WHERE status = %s", 'active' ) );
+$pending_reqs  = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_deletion_requests WHERE status = %s", 'pending' ) );
+$total_cleaned = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_audit_log WHERE action = %s", 'comment_anonymization' ) );
 
 // Score.
 $pdf_gen     = new OmniPrivacy_PDF_Generator();

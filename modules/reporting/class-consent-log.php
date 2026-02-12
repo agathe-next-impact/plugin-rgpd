@@ -69,7 +69,10 @@ class OmniPrivacy_Consent_Log {
 		global $wpdb;
 
 		$hash = $wpdb->get_var(
-			"SELECT entry_hash FROM {$wpdb->prefix}omniprivacy_consent_log ORDER BY id DESC LIMIT 1"
+			$wpdb->prepare(
+				"SELECT entry_hash FROM {$wpdb->prefix}omniprivacy_consent_log ORDER BY id DESC LIMIT %d",
+				1
+			)
 		);
 
 		return $hash ?: '';

@@ -65,6 +65,7 @@ class OmniPrivacy_Loader {
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/reporting/class-erasure-certificate.php';
 
 		// Module Compatibilité (chargé conditionnellement).
+		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/trait-pii-field-scanner.php';
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/class-legal-shield.php';
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/class-woocommerce-scanner.php';
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/class-cf7-scanner.php';
@@ -185,31 +186,37 @@ class OmniPrivacy_Loader {
 			OMNIPRIVACY_VERSION
 		);
 
-		wp_enqueue_script(
-			'omniprivacy-admin-dashboard',
-			OMNIPRIVACY_PLUGIN_URL . 'assets/js/admin-dashboard.js',
-			array( 'jquery' ),
-			OMNIPRIVACY_VERSION,
-			true
-		);
+		// Dashboard JS uniquement sur la page tableau de bord.
+		if ( false !== strpos( $hook_suffix, 'omniprivacy-dashboard' ) ) {
+			wp_enqueue_script(
+				'omniprivacy-admin-dashboard',
+				OMNIPRIVACY_PLUGIN_URL . 'assets/js/admin-dashboard.js',
+				array( 'jquery' ),
+				OMNIPRIVACY_VERSION,
+				true
+			);
+		}
 
-		wp_enqueue_script(
-			'omniprivacy-admin-scan',
-			OMNIPRIVACY_PLUGIN_URL . 'assets/js/admin-scan.js',
-			array( 'jquery' ),
-			OMNIPRIVACY_VERSION,
-			true
-		);
+		// Scan + actions JS sur les pages scan et demandes.
+		if ( false !== strpos( $hook_suffix, 'omniprivacy-scan' ) || false !== strpos( $hook_suffix, 'omniprivacy-requests' ) ) {
+			wp_enqueue_script(
+				'omniprivacy-admin-scan',
+				OMNIPRIVACY_PLUGIN_URL . 'assets/js/admin-scan.js',
+				array( 'jquery' ),
+				OMNIPRIVACY_VERSION,
+				true
+			);
 
-		wp_localize_script( 'omniprivacy-admin-scan', 'omniprivacyAdmin', array(
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'omniprivacy_admin_nonce' ),
-			'i18n'    => array(
-				'scanRunning'  => __( 'Scan en cours...', 'omniprivacy-pro' ),
-				'scanComplete' => __( 'Scan terminé.', 'omniprivacy-pro' ),
-				'confirmAnon'  => __( 'Confirmer l\'anonymisation ?', 'omniprivacy-pro' ),
-			),
-		) );
+			wp_localize_script( 'omniprivacy-admin-scan', 'omniprivacyAdmin', array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'omniprivacy_admin_nonce' ),
+				'i18n'    => array(
+					'scanRunning'  => __( 'Scan en cours...', 'omniprivacy-pro' ),
+					'scanComplete' => __( 'Scan terminé.', 'omniprivacy-pro' ),
+					'confirmAnon'  => __( 'Confirmer l\'anonymisation ?', 'omniprivacy-pro' ),
+				),
+			) );
+		}
 	}
 
 	/**

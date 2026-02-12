@@ -2,24 +2,20 @@
 /**
  * OmniPrivacy Pro — Report Preview Template
  *
- * Utilisé à la fois pour l'aperçu admin et la génération PDF.
- * La variable $is_pdf est définie à true lors de la génération PDF.
+ * Page admin d'aperçu des rapports et déclenchement de la génération PDF.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$is_pdf_context = isset( $is_pdf ) && $is_pdf;
-
-if ( ! $is_pdf_context ) :
-	// Vérifier si une demande de génération PDF est en cours (avec nonce CSRF).
-	if ( isset( $_GET['action'] ) && 'generate_pdf' === $_GET['action'] ) {
-		check_admin_referer( 'omniprivacy_generate_pdf' );
-		$generator = new OmniPrivacy_PDF_Generator();
-		$generator->generate_report();
-		exit;
-	}
+// Vérifier si une demande de génération PDF est en cours (avec nonce CSRF).
+if ( isset( $_GET['action'] ) && 'generate_pdf' === $_GET['action'] ) {
+	check_admin_referer( 'omniprivacy_generate_pdf' );
+	$generator = new OmniPrivacy_PDF_Generator();
+	$generator->generate_report();
+	exit;
+}
 ?>
 
 <div class="wrap omniprivacy-wrap">
@@ -51,5 +47,3 @@ if ( ! $is_pdf_context ) :
 		</p>
 	</div>
 </div>
-
-<?php endif; ?>
