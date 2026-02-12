@@ -1,0 +1,21 @@
+{
+	"name": "omniprivacy/omniprivacy-pro",
+	"description": "Système de gouvernance des données RGPD pour WordPress",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=7.4",
+		"dompdf/dompdf": "^2.0",
+		"woocommerce/action-scheduler": "^3.7"
+	},
+	"autoload": {
+		"classmap": [
+			"includes/",
+			"modules/"
+		]
+	},
+	"config": {
+		"optimize-autoloader": true,
+		"preferred-install": "dist"
+	}
+}

@@ -1,0 +1,108 @@
+/**
+ * OmniPrivacy Pro — Front-end Portal Styles
+ */
+
+.omniprivacy-portal-login,
+.omniprivacy-portal-data {
+	max-width: 640px;
+	margin: 40px auto;
+	padding: 30px;
+	background: #fff;
+	border: 1px solid #e0e0e0;
+	border-radius: 8px;
+}
+
+.omniprivacy-portal-login h2,
+.omniprivacy-portal-data h2 {
+	margin-top: 0;
+	color: #1d2327;
+}
+
+.omniprivacy-portal-login label {
+	display: block;
+	margin-bottom: 5px;
+	font-weight: 600;
+}
+
+.omniprivacy-portal-login input[type="email"] {
+	width: 100%;
+	padding: 10px;
+	border: 1px solid #c3c4c7;
+	border-radius: 4px;
+	font-size: 16px;
+	margin-bottom: 15px;
+	box-sizing: border-box;
+}
+
+.omniprivacy-portal-login button,
+.omniprivacy-portal-data button[type="submit"] {
+	background: #2271b1;
+	color: #fff;
+	border: none;
+	padding: 12px 24px;
+	border-radius: 4px;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+.omniprivacy-portal-login button:hover,
+.omniprivacy-portal-data button[type="submit"]:hover {
+	background: #135e96;
+}
+
+#omniprivacy-message {
+	margin-top: 15px;
+	padding: 10px;
+	border-radius: 4px;
+}
+
+#omniprivacy-message.success {
+	background: #d4edda;
+	color: #155724;
+	border: 1px solid #c3e6cb;
+}
+
+#omniprivacy-message.error {
+	background: #f8d7da;
+	color: #721c24;
+	border: 1px solid #f5c6cb;
+}
+
+.omniprivacy-portal-data h3 {
+	border-bottom: 1px solid #e0e0e0;
+	padding-bottom: 8px;
+	margin-top: 25px;
+}
+
+.omniprivacy-portal-data ul {
+	list-style: none;
+	padding: 0;
+}
+
+.omniprivacy-portal-data li {
+	padding: 8px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.omniprivacy-portal-data label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+}
+
+.omniprivacy-locked {
+	color: #666;
+	font-style: italic;
+}
+
+.omniprivacy-error {
+	max-width: 640px;
+	margin: 40px auto;
+	padding: 20px;
+	background: #f8d7da;
+	color: #721c24;
+	border: 1px solid #f5c6cb;
+	border-radius: 8px;
+	text-align: center;
+}
