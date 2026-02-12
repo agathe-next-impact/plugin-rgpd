@@ -92,7 +92,7 @@ class OmniPrivacy_PDF_Generator {
 	 *
 	 * @return int Score.
 	 */
-	private function calculate_compliance_score() {
+	public function calculate_compliance_score() {
 		$score = 0;
 
 		// EXIF activé ? +25.

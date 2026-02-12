@@ -13,8 +13,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 $is_pdf_context = isset( $is_pdf ) && $is_pdf;
 
 if ( ! $is_pdf_context ) :
-	// Vérifier si une demande de génération PDF est en cours.
+	// Vérifier si une demande de génération PDF est en cours (avec nonce CSRF).
 	if ( isset( $_GET['action'] ) && 'generate_pdf' === $_GET['action'] ) {
+		check_admin_referer( 'omniprivacy_generate_pdf' );
 		$generator = new OmniPrivacy_PDF_Generator();
 		$generator->generate_report();
 		exit;
@@ -27,7 +28,7 @@ if ( ! $is_pdf_context ) :
 	<div class="omniprivacy-card">
 		<h3><?php esc_html_e( 'Rapport d\'audit RGPD', 'omniprivacy-pro' ); ?></h3>
 		<p><?php esc_html_e( 'Générez un rapport PDF complet incluant le score de conformité, l\'historique des nettoyages et les demandes traitées.', 'omniprivacy-pro' ); ?></p>
-		<a href="<?php echo esc_url( admin_url( 'admin.php?page=omniprivacy-reports&action=generate_pdf' ) ); ?>" class="button button-primary">
+		<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=omniprivacy-reports&action=generate_pdf' ), 'omniprivacy_generate_pdf' ) ); ?>" class="button button-primary">
 			<?php esc_html_e( 'Télécharger le rapport PDF', 'omniprivacy-pro' ); ?>
 		</a>
 	</div>

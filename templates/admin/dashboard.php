@@ -16,10 +16,8 @@ $pending_reqs  = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivac
 $total_cleaned = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_audit_log WHERE action = 'comment_anonymization'" );
 
 // Score.
-$pdf_gen = new OmniPrivacy_PDF_Generator();
-$score_method = new ReflectionMethod( $pdf_gen, 'calculate_compliance_score' );
-$score_method->setAccessible( true );
-$score = $score_method->invoke( $pdf_gen );
+$pdf_gen     = new OmniPrivacy_PDF_Generator();
+$score       = $pdf_gen->calculate_compliance_score();
 $score_class = $score >= 75 ? 'good' : ( $score >= 50 ? 'medium' : 'poor' );
 ?>
 
@@ -66,7 +64,7 @@ $score_class = $score >= 75 ? 'good' : ( $score >= 50 ? 'medium' : 'poor' );
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=omniprivacy-scan' ) ); ?>" class="button button-primary">
 				<?php esc_html_e( 'Lancer un scan PII', 'omniprivacy-pro' ); ?>
 			</a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=omniprivacy-reports&action=generate_pdf' ) ); ?>" class="button">
+			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=omniprivacy-reports&action=generate_pdf' ), 'omniprivacy_generate_pdf' ) ); ?>" class="button">
 				<?php esc_html_e( 'Générer un rapport PDF', 'omniprivacy-pro' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=omniprivacy-settings' ) ); ?>" class="button">

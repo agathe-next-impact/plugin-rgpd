@@ -19,6 +19,9 @@ $results_table->prepare_items();
 				data-label="<?php esc_attr_e( 'Lancer un nouveau scan', 'omniprivacy-pro' ); ?>">
 			<?php esc_html_e( 'Lancer un nouveau scan', 'omniprivacy-pro' ); ?>
 		</button>
+		<div class="omniprivacy-scan-progress" style="display:none;">
+			<div class="omniprivacy-scan-progress-bar"></div>
+		</div>
 		<div id="omniprivacy-scan-status" style="display:none; margin-top: 10px;"></div>
 	</div>
 

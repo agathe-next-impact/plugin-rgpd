@@ -141,8 +141,11 @@ class OmniPrivacy_Portal_Shortcode {
 						<?php foreach ( $data['orders'] as $order ) : ?>
 							<li>
 								<?php if ( $order['locked'] ) : ?>
-									<span class="omniprivacy-locked" title="<?php esc_attr_e( 'Conservation obligatoire — obligation fiscale', 'omniprivacy-pro' ); ?>">
+									<span class="omniprivacy-locked" title="<?php echo esc_attr( $order['lock_reason'] ?? __( 'Conservation obligatoire — obligation fiscale', 'omniprivacy-pro' ) ); ?>">
 										&#128274; <?php printf( esc_html__( 'Commande #%1$s — %2$s', 'omniprivacy-pro' ), esc_html( $order['number'] ), esc_html( $order['date'] ) ); ?>
+										<?php if ( ! empty( $order['lock_until'] ) ) : ?>
+											<small>(<?php printf( esc_html__( 'jusqu\'au %s', 'omniprivacy-pro' ), esc_html( $order['lock_until'] ) ); ?>)</small>
+										<?php endif; ?>
 									</span>
 								<?php else : ?>
 									<label>
@@ -150,6 +153,63 @@ class OmniPrivacy_Portal_Shortcode {
 										<?php printf( esc_html__( 'Commande #%1$s — %2$s', 'omniprivacy-pro' ), esc_html( $order['number'] ), esc_html( $order['date'] ) ); ?>
 									</label>
 								<?php endif; ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
+
+				<?php if ( ! empty( $data['scan_results'] ) ) : ?>
+					<h3><?php esc_html_e( 'Données détectées par scan', 'omniprivacy-pro' ); ?></h3>
+					<ul>
+						<?php foreach ( $data['scan_results'] as $result ) : ?>
+							<li>
+								<label>
+									<input type="checkbox" name="items[]" value='<?php echo esc_attr( wp_json_encode( $result ) ); ?>' />
+									<?php printf(
+										/* translators: 1: type de pattern, 2: type de source, 3: ID source, 4: nom du champ */
+										esc_html__( '%1$s dans %2$s #%3$d (%4$s)', 'omniprivacy-pro' ),
+										esc_html( ucfirst( $result['pattern_type'] ) ),
+										esc_html( $result['source_type'] ),
+										absint( $result['source_id'] ),
+										esc_html( $result['field_name'] )
+									); ?>
+								</label>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
+
+				<?php if ( ! empty( $data['cf7_submissions'] ) ) : ?>
+					<h3><?php esc_html_e( 'Soumissions Contact Form 7', 'omniprivacy-pro' ); ?></h3>
+					<ul>
+						<?php foreach ( $data['cf7_submissions'] as $sub ) : ?>
+							<li>
+								<label>
+									<input type="checkbox" name="items[]" value='<?php echo esc_attr( wp_json_encode( $sub ) ); ?>' />
+									<?php printf(
+										esc_html__( '%1$s — %2$s', 'omniprivacy-pro' ),
+										esc_html( $sub['date'] ),
+										esc_html( $sub['subject'] )
+									); ?>
+								</label>
+							</li>
+						<?php endforeach; ?>
+					</ul>
+				<?php endif; ?>
+
+				<?php if ( ! empty( $data['wpforms_entries'] ) ) : ?>
+					<h3><?php esc_html_e( 'Soumissions de formulaires', 'omniprivacy-pro' ); ?></h3>
+					<ul>
+						<?php foreach ( $data['wpforms_entries'] as $entry ) : ?>
+							<li>
+								<label>
+									<input type="checkbox" name="items[]" value='<?php echo esc_attr( wp_json_encode( $entry ) ); ?>' />
+									<?php printf(
+										esc_html__( '%1$s — %2$s', 'omniprivacy-pro' ),
+										esc_html( $entry['date'] ),
+										esc_html( $entry['form_name'] )
+									); ?>
+								</label>
 							</li>
 						<?php endforeach; ?>
 					</ul>
