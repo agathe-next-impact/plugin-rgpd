@@ -124,6 +124,8 @@ class OmniPrivacy_Data_Viewer {
 			return array();
 		}
 
+		$legal_shield = new OmniPrivacy_Legal_Shield();
+
 		$orders = wc_get_orders( array(
 			'billing_email' => $email,
 			'limit'         => 100,
@@ -132,33 +134,25 @@ class OmniPrivacy_Data_Viewer {
 		$result = array();
 		foreach ( $orders as $order ) {
 			$order_date = $order->get_date_created();
-			$is_locked  = $this->is_legally_locked( $order_date );
+			$protection = $legal_shield->is_protected( 'order', $order->get_id() );
 
-			$result[] = array(
+			$item = array(
 				'id'      => $order->get_id(),
 				'number'  => $order->get_order_number(),
 				'date'    => $order_date ? $order_date->date( 'Y-m-d' ) : '',
 				'status'  => wc_get_order_status_name( $order->get_status() ),
-				'locked'  => $is_locked,
+				'locked'  => false !== $protection,
 				'type'    => 'order',
 			);
+
+			if ( false !== $protection ) {
+				$item['lock_reason'] = $protection['reason'];
+				$item['lock_until']  = $protection['lock_until'];
+			}
+
+			$result[] = $item;
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Vérifie si une commande est protégée par l'obligation fiscale (< 10 ans).
-	 *
-	 * @param \WC_DateTime|null $order_date Date de la commande.
-	 * @return bool True si protégée.
-	 */
-	private function is_legally_locked( $order_date ) {
-		if ( ! $order_date ) {
-			return true;
-		}
-
-		$ten_years_ago = strtotime( '-10 years' );
-		return $order_date->getTimestamp() > $ten_years_ago;
 	}
 }

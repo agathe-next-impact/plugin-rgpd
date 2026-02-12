@@ -133,11 +133,29 @@ class OmniPrivacy_Settings {
 			'default'           => 1,
 		) );
 
+		add_settings_field(
+			'omniprivacy_log_rotation_enabled',
+			__( 'Rotation des logs activée', 'omniprivacy-pro' ),
+			array( $this, 'field_checkbox' ),
+			'omniprivacy-settings',
+			'omniprivacy_data_clean',
+			array( 'option' => 'omniprivacy_log_rotation_enabled' )
+		);
+
 		register_setting( 'omniprivacy_settings', 'omniprivacy_log_retention_days', array(
 			'type'              => 'integer',
 			'sanitize_callback' => 'absint',
 			'default'           => 30,
 		) );
+
+		add_settings_field(
+			'omniprivacy_log_retention_days',
+			__( 'Rétention des logs (jours)', 'omniprivacy-pro' ),
+			array( $this, 'field_number' ),
+			'omniprivacy-settings',
+			'omniprivacy_data_clean',
+			array( 'option' => 'omniprivacy_log_retention_days', 'min' => 1, 'max' => 365 )
+		);
 
 		// Section Scan PII.
 		add_settings_section(
@@ -162,6 +180,24 @@ class OmniPrivacy_Settings {
 			array( 'option' => 'omniprivacy_scan_batch_size', 'min' => 10, 'max' => 500 )
 		);
 
+		register_setting( 'omniprivacy_settings', 'omniprivacy_custom_patterns', array(
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_textarea_field',
+			'default'           => '',
+		) );
+
+		add_settings_field(
+			'omniprivacy_custom_patterns',
+			__( 'Patterns regex personnalisés', 'omniprivacy-pro' ),
+			array( $this, 'field_textarea' ),
+			'omniprivacy-settings',
+			'omniprivacy_pii_search',
+			array(
+				'option'      => 'omniprivacy_custom_patterns',
+				'description' => __( 'Un pattern par ligne au format : nom|regex (ex: ssn|/\b\d{3}-\d{2}-\d{4}\b/)', 'omniprivacy-pro' ),
+			)
+		);
+
 		// Section Portail.
 		add_settings_section(
 			'omniprivacy_portal',
@@ -183,6 +219,21 @@ class OmniPrivacy_Settings {
 			'omniprivacy-settings',
 			'omniprivacy_portal',
 			array( 'option' => 'omniprivacy_magic_link_expiry', 'min' => 600, 'max' => 86400 )
+		);
+
+		register_setting( 'omniprivacy_settings', 'omniprivacy_magic_link_rate_limit', array(
+			'type'              => 'integer',
+			'sanitize_callback' => 'absint',
+			'default'           => 3,
+		) );
+
+		add_settings_field(
+			'omniprivacy_magic_link_rate_limit',
+			__( 'Max. demandes magic link par heure', 'omniprivacy-pro' ),
+			array( $this, 'field_number' ),
+			'omniprivacy-settings',
+			'omniprivacy_portal',
+			array( 'option' => 'omniprivacy_magic_link_rate_limit', 'min' => 1, 'max' => 10 )
 		);
 	}
 
@@ -225,6 +276,21 @@ class OmniPrivacy_Settings {
 			esc_attr( $args['option'] ),
 			checked( $value, 1, false )
 		);
+	}
+
+	/**
+	 * Champ textarea.
+	 */
+	public function field_textarea( $args ) {
+		$value = get_option( $args['option'], '' );
+		printf(
+			'<textarea name="%s" rows="5" cols="60" class="large-text code">%s</textarea>',
+			esc_attr( $args['option'] ),
+			esc_textarea( $value )
+		);
+		if ( ! empty( $args['description'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
+		}
 	}
 
 	/**

@@ -64,11 +64,43 @@ function omniprivacy_init() {
 		return;
 	}
 
+	// Vérifier si une migration DB est nécessaire.
+	omniprivacy_maybe_upgrade();
+
 	require_once OMNIPRIVACY_PLUGIN_DIR . 'includes/class-omniprivacy-loader.php';
 	$loader = new OmniPrivacy_Loader();
 	$loader->run();
 }
 add_action( 'plugins_loaded', 'omniprivacy_init', 20 );
+
+/**
+ * Vérifie et exécute les migrations si la version DB diffère.
+ */
+function omniprivacy_maybe_upgrade() {
+	$db_version = get_option( 'omniprivacy_version', '0.0.0' );
+
+	if ( version_compare( $db_version, OMNIPRIVACY_VERSION, '<' ) ) {
+		require_once OMNIPRIVACY_PLUGIN_DIR . 'includes/class-omniprivacy-activator.php';
+		OmniPrivacy_Activator::activate();
+	}
+}
+
+/**
+ * Ajoute le lien "Réglages" sur la page des plugins.
+ *
+ * @param array $links Liens existants.
+ * @return array Liens modifiés.
+ */
+function omniprivacy_plugin_action_links( $links ) {
+	$settings_link = sprintf(
+		'<a href="%s">%s</a>',
+		esc_url( admin_url( 'admin.php?page=omniprivacy-settings' ) ),
+		esc_html__( 'Réglages', 'omniprivacy-pro' )
+	);
+	array_unshift( $links, $settings_link );
+	return $links;
+}
+add_filter( 'plugin_action_links_' . OMNIPRIVACY_PLUGIN_BASENAME, 'omniprivacy_plugin_action_links' );
 
 /**
  * Admin notice for PHP version requirement.

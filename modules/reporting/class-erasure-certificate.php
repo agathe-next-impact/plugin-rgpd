@@ -136,24 +136,13 @@ class OmniPrivacy_Erasure_Certificate {
 	 * Log dans le journal d'audit.
 	 */
 	private function log_audit( $request_id, $transaction_id ) {
-		global $wpdb;
-
-		$details = wp_json_encode( array(
-			'request_id'     => $request_id,
-			'transaction_id' => $transaction_id,
-		) );
-
-		$wpdb->insert(
-			$wpdb->prefix . 'omniprivacy_audit_log',
+		OmniPrivacy_Audit_Logger::log_system(
+			'erasure_certificate_sent',
+			'deletion_request',
 			array(
-				'action'            => 'erasure_certificate_sent',
-				'actor'             => 'system',
-				'target_type'       => 'deletion_request',
-				'target_id'         => $request_id,
-				'details_encrypted' => OmniPrivacy_Encryption::encrypt( $details ),
-				'created_at'        => current_time( 'mysql' ),
-			),
-			array( '%s', '%s', '%s', '%d', '%s', '%s' )
+				'request_id'     => $request_id,
+				'transaction_id' => $transaction_id,
+			)
 		);
 	}
 }

@@ -13,6 +13,50 @@ if ( ! defined( 'ABSPATH' ) ) {
 class OmniPrivacy_Deletion_Request {
 
 	/**
+	 * Handler AJAX pour la soumission de demande de suppression depuis le portail visiteur.
+	 */
+	public function ajax_submit_deletion() {
+		check_ajax_referer( 'omniprivacy_portal_nonce', 'nonce' );
+
+		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+		if ( ! is_email( $email ) ) {
+			wp_send_json_error( array( 'message' => __( 'Adresse email invalide.', 'omniprivacy-pro' ) ) );
+		}
+
+		$raw_items = isset( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : array();
+		if ( ! is_array( $raw_items ) || empty( $raw_items ) ) {
+			wp_send_json_error( array( 'message' => __( 'Aucun élément sélectionné.', 'omniprivacy-pro' ) ) );
+		}
+
+		// Décoder les items JSON envoyés depuis le formulaire.
+		$items = array();
+		foreach ( $raw_items as $raw ) {
+			$decoded = json_decode( sanitize_text_field( $raw ), true );
+			if ( is_array( $decoded ) && ! empty( $decoded['type'] ) && ! empty( $decoded['id'] ) ) {
+				$items[] = array(
+					'type' => sanitize_text_field( $decoded['type'] ),
+					'id'   => absint( $decoded['id'] ),
+				);
+			}
+		}
+
+		if ( empty( $items ) ) {
+			wp_send_json_error( array( 'message' => __( 'Éléments invalides.', 'omniprivacy-pro' ) ) );
+		}
+
+		$request_id = $this->submit_request( $email, $items );
+
+		if ( false === $request_id ) {
+			wp_send_json_error( array( 'message' => __( 'Impossible de soumettre la demande.', 'omniprivacy-pro' ) ) );
+		}
+
+		wp_send_json_success( array(
+			'message'    => __( 'Votre demande a été soumise. Vous recevrez un email de confirmation.', 'omniprivacy-pro' ),
+			'request_id' => $request_id,
+		) );
+	}
+
+	/**
 	 * Soumet une nouvelle demande de suppression (depuis le portail visiteur).
 	 *
 	 * @param string $email Adresse email du demandeur.
@@ -150,17 +194,14 @@ class OmniPrivacy_Deletion_Request {
 
 	/**
 	 * Filtre les éléments protégés par le bouclier légal.
+	 * Délègue au Legal Shield pour une évaluation centralisée.
 	 *
 	 * @param array $items Éléments demandés.
 	 * @return array Éléments filtrés.
 	 */
 	private function filter_locked_items( $items ) {
-		return array_filter( $items, function ( $item ) {
-			if ( 'order' === ( $item['type'] ?? '' ) && ! empty( $item['locked'] ) ) {
-				return false;
-			}
-			return true;
-		} );
+		$legal_shield = new OmniPrivacy_Legal_Shield();
+		return $legal_shield->filter_deletion_items( $items );
 	}
 
 	/**
@@ -172,6 +213,9 @@ class OmniPrivacy_Deletion_Request {
 	private function execute_deletion( $items ) {
 		$deleted = array();
 
+		// Charger les handlers d'extension (WooCommerce, CF7, WPForms, etc.).
+		$ext_handlers = apply_filters( 'omniprivacy_deletion_handlers', array() );
+
 		foreach ( $items as $item ) {
 			$type = $item['type'] ?? '';
 			$id   = absint( $item['id'] ?? 0 );
@@ -180,24 +224,22 @@ class OmniPrivacy_Deletion_Request {
 				continue;
 			}
 
+			$success = false;
+
 			switch ( $type ) {
 				case 'comment':
-					if ( wp_delete_comment( $id, true ) ) {
-						$deleted[] = $item;
-					}
+					$success = wp_delete_comment( $id, true );
 					break;
 
 				case 'account':
 					if ( function_exists( 'wp_delete_user' ) ) {
 						require_once ABSPATH . 'wp-admin/includes/user.php';
 						wp_delete_user( $id );
-						$deleted[] = $item;
+						$success = true;
 					}
 					break;
 
 				case 'scan_result':
-					// Anonymiser le résultat PII.
-					$actions = new OmniPrivacy_PII_Actions();
 					global $wpdb;
 					$wpdb->update(
 						$wpdb->prefix . 'omniprivacy_scan_results',
@@ -206,8 +248,19 @@ class OmniPrivacy_Deletion_Request {
 						array( '%s', '%s' ),
 						array( '%d' )
 					);
-					$deleted[] = $item;
+					$success = true;
 					break;
+
+				default:
+					// Déléguer aux handlers d'extension.
+					if ( isset( $ext_handlers[ $type ] ) && is_callable( $ext_handlers[ $type ] ) ) {
+						$success = call_user_func( $ext_handlers[ $type ], $id );
+					}
+					break;
+			}
+
+			if ( $success ) {
+				$deleted[] = $item;
 			}
 		}
 
@@ -243,25 +296,18 @@ class OmniPrivacy_Deletion_Request {
 	 * Log dans le journal d'audit.
 	 */
 	private function log_audit( $action, $request_id, $email ) {
-		global $wpdb;
+		$current_user = wp_get_current_user();
+		$actor        = $current_user->ID > 0 ? $current_user->user_login : 'visitor';
 
-		$details = wp_json_encode( array(
-			'request_id' => $request_id,
-			'email'      => $email,
-			'action'     => $action,
-		) );
-
-		$wpdb->insert(
-			$wpdb->prefix . 'omniprivacy_audit_log',
+		OmniPrivacy_Audit_Logger::log(
+			'deletion_request_' . $action,
+			$actor,
+			'deletion_request',
+			$request_id,
 			array(
-				'action'            => 'deletion_request_' . $action,
-				'actor'             => wp_get_current_user()->user_login ?: 'visitor',
-				'target_type'       => 'deletion_request',
-				'target_id'         => $request_id,
-				'details_encrypted' => OmniPrivacy_Encryption::encrypt( $details ),
-				'created_at'        => current_time( 'mysql' ),
-			),
-			array( '%s', '%s', '%s', '%d', '%s', '%s' )
+				'request_id' => $request_id,
+				'email'      => $email,
+			)
 		);
 	}
 }

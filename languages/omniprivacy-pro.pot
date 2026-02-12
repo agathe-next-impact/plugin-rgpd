@@ -1,0 +1,633 @@
+# Copyright (C) 2026 OmniPrivacy Pro
+# This file is distributed under the same license as the OmniPrivacy Pro plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: OmniPrivacy Pro 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-02-12T00:00:00+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: OmniPrivacy Pro\n"
+"X-Domain: omniprivacy-pro\n"
+
+#: omniprivacy-pro.php
+msgid "Réglages"
+msgstr ""
+
+#: omniprivacy-pro.php
+msgid "OmniPrivacy Pro nécessite PHP 7.4 ou supérieur."
+msgstr ""
+
+#: omniprivacy-pro.php
+msgid "OmniPrivacy Pro nécessite l'extension OpenSSL pour le chiffrement des données."
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "OmniPrivacy Pro"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "OmniPrivacy"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Tableau de bord"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Scan PII"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Demandes de suppression"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Demandes"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Rapports"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Data-Clean"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Rétention des commentaires (mois)"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Rôles exclus de l'anonymisation"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Nettoyage EXIF automatique"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Rotation des logs activée"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Rétention des logs (jours)"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Taille de lot (items par batch)"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Patterns regex personnalisés"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Un pattern par ligne au format : nom|regex (ex: ssn|/\\b\\d{3}-\\d{2}-\\d{4}\\b/)"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Portail Visiteur"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Expiration magic link (secondes)"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Max. demandes magic link par heure"
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Configuration du nettoyage automatique des données."
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Configuration du moteur de scan des données personnelles."
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+msgid "Configuration du portail de transparence pour les visiteurs."
+msgstr ""
+
+#: includes/class-omniprivacy-settings.php
+#: modules/user-portal/class-deletion-request.php
+#: modules/reporting/class-pdf-generator.php
+msgid "Accès non autorisé."
+msgstr ""
+
+#: includes/class-omniprivacy-activator.php
+msgid "OmniPrivacy Pro nécessite l'extension OpenSSL."
+msgstr ""
+
+#: includes/class-omniprivacy-loader.php
+msgid "Scan en cours..."
+msgstr ""
+
+#: includes/class-omniprivacy-loader.php
+msgid "Scan terminé."
+msgstr ""
+
+#: includes/class-omniprivacy-loader.php
+msgid "Confirmer l'anonymisation ?"
+msgstr ""
+
+#: includes/class-omniprivacy-loader.php
+msgid "Envoi en cours..."
+msgstr ""
+
+#: includes/class-omniprivacy-loader.php
+msgid "Lien envoyé ! Vérifiez votre email."
+msgstr ""
+
+#: includes/class-omniprivacy-loader.php
+msgid "Demande envoyée avec succès."
+msgstr ""
+
+#: includes/class-omniprivacy-loader.php
+msgid "Une erreur est survenue."
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Accéder à mes données personnelles"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Entrez votre adresse email pour recevoir un lien d'accès sécurisé."
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+#: templates/admin/deletion-requests.php
+msgid "Email"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Recevoir mon lien d'accès"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Lien invalide ou expiré. Veuillez demander un nouveau lien d'accès."
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Vos données personnelles"
+msgstr ""
+
+#. translators: %s: email de l'utilisateur
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Données associées à : %s"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Commentaires"
+msgstr ""
+
+#. translators: 1: extrait du commentaire, 2: titre du post
+#: modules/user-portal/class-portal-shortcode.php
+msgid "%1$s — %2$s"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Compte"
+msgstr ""
+
+#. translators: 1: nom d'affichage, 2: date d'inscription
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Compte %s (inscrit le %s)"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Commandes"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Conservation obligatoire — obligation fiscale"
+msgstr ""
+
+#. translators: 1: numéro de commande, 2: date
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Commande #%1$s — %2$s"
+msgstr ""
+
+#: modules/user-portal/class-portal-shortcode.php
+msgid "Demander la suppression des éléments sélectionnés"
+msgstr ""
+
+#: modules/user-portal/class-magic-link.php
+#: modules/user-portal/class-deletion-request.php
+msgid "Adresse email invalide."
+msgstr ""
+
+#: modules/user-portal/class-magic-link.php
+msgid "Trop de demandes. Veuillez réessayer plus tard."
+msgstr ""
+
+#: modules/user-portal/class-magic-link.php
+msgid "Votre lien d'accès sécurisé — OmniPrivacy"
+msgstr ""
+
+#: modules/user-portal/class-magic-link.php
+msgid "Un lien d'accès vous a été envoyé par email."
+msgstr ""
+
+#: modules/user-portal/class-magic-link.php
+msgid "Impossible d'envoyer l'email. Contactez l'administrateur."
+msgstr ""
+
+#: modules/user-portal/class-magic-link.php
+msgid "Vous avez demandé l'accès à vos données personnelles."
+msgstr ""
+
+#: modules/user-portal/class-magic-link.php
+#: templates/emails/magic-link.php
+msgid "Accéder à mes données"
+msgstr ""
+
+#. translators: %d: minutes de validité
+#: modules/user-portal/class-magic-link.php
+msgid "Ce lien expire dans %d minutes."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Aucun élément sélectionné."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Éléments invalides."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Impossible de soumettre la demande."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Votre demande a été soumise. Vous recevrez un email de confirmation."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "ID invalide."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Demande non trouvée."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Demande approuvée. Données supprimées."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Un motif de rejet est obligatoire."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "Demande rejetée."
+msgstr ""
+
+#: modules/user-portal/class-deletion-request.php
+msgid "[Supprimé]"
+msgstr ""
+
+#. translators: %d: ID de la demande
+#: modules/user-portal/class-deletion-request.php
+msgid "[OmniPrivacy] Nouvelle demande de suppression #%d"
+msgstr ""
+
+#. translators: 1: email, 2: URL admin
+#: modules/user-portal/class-deletion-request.php
+msgid "Une nouvelle demande de suppression a été soumise par %1$s.\n\nGérer les demandes : %2$s"
+msgstr ""
+
+#: modules/pii-search/class-pii-scanner.php
+msgid "Accès non autorisé."
+msgstr ""
+
+#: modules/pii-search/class-pii-scanner.php
+msgid "Scan démarré en arrière-plan."
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Résultat PII"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Résultats PII"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Type"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Source"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Champ"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Valeur détectée"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+#: templates/admin/deletion-requests.php
+msgid "Statut"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+#: templates/admin/deletion-requests.php
+msgid "Actions"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Anonymiser"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Ignorer"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Actif"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Anonymisé"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Ignoré"
+msgstr ""
+
+#: modules/pii-search/class-pii-results.php
+msgid "Éditer"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+msgid "DOMPDF non installé. Exécutez composer install."
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+#: templates/admin/report-preview.php
+msgid "Rapport d'audit RGPD"
+msgstr ""
+
+#. translators: %s: date de génération
+#: modules/reporting/class-pdf-generator.php
+msgid "Généré le %s"
+msgstr ""
+
+#. translators: %s: version du plugin
+#: modules/reporting/class-pdf-generator.php
+msgid "OmniPrivacy Pro v%s"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+#: templates/admin/dashboard.php
+msgid "Score de conformité"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+msgid "Historique des nettoyages"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+msgid "Action"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+#: templates/admin/deletion-requests.php
+msgid "Date"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+msgid "Demandes utilisateurs"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+msgid "Créée"
+msgstr ""
+
+#: modules/reporting/class-pdf-generator.php
+#: templates/admin/deletion-requests.php
+msgid "Traitée"
+msgstr ""
+
+#. translators: %s: ID de transaction
+#: modules/reporting/class-erasure-certificate.php
+msgid "Certificat d'effacement — %s"
+msgstr ""
+
+#: modules/reporting/class-erasure-certificate.php
+#: templates/emails/erasure-certificate.php
+msgid "Certificat d'effacement de données"
+msgstr ""
+
+#: modules/reporting/class-erasure-certificate.php
+#: templates/emails/erasure-certificate.php
+msgid "Transaction"
+msgstr ""
+
+#: modules/reporting/class-erasure-certificate.php
+#: templates/emails/erasure-certificate.php
+msgid "Site"
+msgstr ""
+
+#: modules/reporting/class-erasure-certificate.php
+#: templates/emails/erasure-certificate.php
+msgid "Date d'effacement"
+msgstr ""
+
+#: modules/reporting/class-erasure-certificate.php
+#: templates/emails/erasure-certificate.php
+msgid "Éléments supprimés"
+msgstr ""
+
+#: modules/reporting/class-erasure-certificate.php
+#: templates/emails/erasure-certificate.php
+msgid "Catégories concernées"
+msgstr ""
+
+#: modules/reporting/class-erasure-certificate.php
+#: templates/emails/erasure-certificate.php
+msgid "Signature de vérification :"
+msgstr ""
+
+#: modules/compat/class-woocommerce-scanner.php
+msgid "[Données supprimées]"
+msgstr ""
+
+#: modules/compat/class-legal-shield.php
+msgid "Obligation fiscale (art. L123-22 du Code de commerce)"
+msgstr ""
+
+#: modules/compat/class-legal-shield.php
+msgid "Date inconnue"
+msgstr ""
+
+#: templates/admin/scan-results.php
+msgid "Scan PII — Données personnelles détectées"
+msgstr ""
+
+#: templates/admin/scan-results.php
+msgid "Lancer un nouveau scan"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "OmniPrivacy Pro — Réglages"
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Portail visiteur"
+msgstr ""
+
+#. translators: %s: shortcode
+#: templates/admin/settings.php
+msgid "Utilisez le shortcode %s sur une page pour afficher le portail de transparence."
+msgstr ""
+
+#: templates/admin/settings.php
+msgid "Registre des consentements"
+msgstr ""
+
+#. translators: %s: action hook
+#: templates/admin/settings.php
+msgid "Déclenchez l'enregistrement via : %s"
+msgstr ""
+
+#: templates/admin/report-preview.php
+msgid "Générez un rapport PDF complet incluant le score de conformité, l'historique des nettoyages et les demandes traitées."
+msgstr ""
+
+#: templates/admin/report-preview.php
+msgid "Télécharger le rapport PDF"
+msgstr ""
+
+#: templates/admin/report-preview.php
+msgid "Intégrité du registre des consentements"
+msgstr ""
+
+#. translators: %d: nombre d'entrées
+#: templates/admin/report-preview.php
+msgid "Entrées totales : %d"
+msgstr ""
+
+#: templates/admin/report-preview.php
+msgid "Intégrité vérifiée — Aucune altération détectée."
+msgstr ""
+
+#. translators: %d: nombre d'incohérences
+#: templates/admin/report-preview.php
+msgid "ATTENTION : %d incohérences détectées."
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "OmniPrivacy Pro — Tableau de bord"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Données personnelles détectées"
+msgstr ""
+
+#. translators: %s: date du dernier scan
+#: templates/admin/dashboard.php
+msgid "Dernier scan : %s"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Aucun scan effectué"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Demandes en attente"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Gérer"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Nettoyages effectués"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Actions rapides"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Lancer un scan PII"
+msgstr ""
+
+#: templates/admin/dashboard.php
+msgid "Générer un rapport PDF"
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "Toutes"
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "En attente"
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "Approuvées"
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "Rejetées"
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "#"
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "Aucune demande."
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "Approuver"
+msgstr ""
+
+#: templates/admin/deletion-requests.php
+msgid "Rejeter"
+msgstr ""
+
+#: templates/emails/magic-link.php
+msgid "Vous avez demandé l'accès à vos données personnelles sur notre site."
+msgstr ""
+
+#: templates/emails/magic-link.php
+msgid "Cliquez sur le bouton ci-dessous pour accéder de manière sécurisée à vos informations :"
+msgstr ""
+
+#. translators: %d: minutes de validité
+#: templates/emails/magic-link.php
+msgid "Ce lien est valable %d minutes et ne peut être utilisé qu'une seule fois."
+msgstr ""
+
+#: templates/emails/magic-link.php
+msgid "Si vous n'avez pas effectué cette demande, vous pouvez ignorer cet email."
+msgstr ""
+
+#: templates/emails/magic-link.php
+msgid "Conformité RGPD propulsée par OmniPrivacy Pro"
+msgstr ""
+
+#: templates/emails/erasure-certificate.php
+msgid "Transaction ID"
+msgstr ""
+
+#: templates/emails/erasure-certificate.php
+msgid "Conformément à votre demande, les données suivantes ont été supprimées de notre système."
+msgstr ""
+
+#: templates/emails/erasure-certificate.php
+msgid "Ce document fait foi en cas de contrôle. Conservez-le précieusement."
+msgstr ""

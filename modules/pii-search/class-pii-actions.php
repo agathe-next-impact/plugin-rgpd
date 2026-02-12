@@ -197,27 +197,15 @@ class OmniPrivacy_PII_Actions {
 	 * Log l'action dans le journal d'audit.
 	 */
 	private function log_audit( $action, $item ) {
-		global $wpdb;
-
-		$details = wp_json_encode( array(
-			'action'       => $action,
-			'source_type'  => $item->source_type,
-			'source_id'    => $item->source_id,
-			'field_name'   => $item->field_name,
-			'pattern_type' => $item->pattern_type,
-		) );
-
-		$wpdb->insert(
-			$wpdb->prefix . 'omniprivacy_audit_log',
+		OmniPrivacy_Audit_Logger::log_user(
+			'pii_' . $action,
+			$item->source_type,
+			$item->source_id,
 			array(
-				'action'            => 'pii_' . $action,
-				'actor'             => wp_get_current_user()->user_login,
-				'target_type'       => $item->source_type,
-				'target_id'         => $item->source_id,
-				'details_encrypted' => OmniPrivacy_Encryption::encrypt( $details ),
-				'created_at'        => current_time( 'mysql' ),
-			),
-			array( '%s', '%s', '%s', '%d', '%s', '%s' )
+				'action'       => $action,
+				'field_name'   => $item->field_name,
+				'pattern_type' => $item->pattern_type,
+			)
 		);
 	}
 }

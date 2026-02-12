@@ -9,12 +9,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 global $wpdb;
 
-$status_filter = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
-$where         = $status_filter ? $wpdb->prepare( 'WHERE status = %s', $status_filter ) : '';
+// Whitelist strict des statuts autorisés.
+$allowed_statuses = array( 'pending', 'approved', 'rejected' );
+$status_filter    = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
+if ( $status_filter && ! in_array( $status_filter, $allowed_statuses, true ) ) {
+	$status_filter = '';
+}
 
-$requests = $wpdb->get_results(
-	"SELECT * FROM {$wpdb->prefix}omniprivacy_deletion_requests {$where} ORDER BY created_at DESC LIMIT 50" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-);
+if ( $status_filter ) {
+	$requests = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}omniprivacy_deletion_requests WHERE status = %s ORDER BY created_at DESC LIMIT 50",
+			$status_filter
+		)
+	);
+} else {
+	$requests = $wpdb->get_results(
+		"SELECT * FROM {$wpdb->prefix}omniprivacy_deletion_requests ORDER BY created_at DESC LIMIT 50"
+	);
+}
 ?>
 
 <div class="wrap omniprivacy-wrap">

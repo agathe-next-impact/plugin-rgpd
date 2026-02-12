@@ -40,6 +40,7 @@ class OmniPrivacy_Loader {
 	 */
 	private function load_dependencies() {
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'includes/class-omniprivacy-encryption.php';
+		require_once OMNIPRIVACY_PLUGIN_DIR . 'includes/class-omniprivacy-audit-logger.php';
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'includes/class-omniprivacy-settings.php';
 
 		// Module Data-Clean.
@@ -62,6 +63,12 @@ class OmniPrivacy_Loader {
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/reporting/class-pdf-generator.php';
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/reporting/class-consent-log.php';
 		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/reporting/class-erasure-certificate.php';
+
+		// Module Compatibilité (chargé conditionnellement).
+		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/class-legal-shield.php';
+		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/class-woocommerce-scanner.php';
+		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/class-cf7-scanner.php';
+		require_once OMNIPRIVACY_PLUGIN_DIR . 'modules/compat/class-wpforms-scanner.php';
 	}
 
 	/**
@@ -104,6 +111,7 @@ class OmniPrivacy_Loader {
 
 		$this->add_action( 'omniprivacy_pii_scan_batch', $scanner, 'process_batch' );
 		$this->add_action( 'wp_ajax_omniprivacy_start_scan', $scanner, 'ajax_start_scan' );
+		$this->add_action( 'wp_ajax_omniprivacy_scan_progress', $scanner, 'ajax_scan_progress' );
 		$this->add_action( 'wp_ajax_omniprivacy_anonymize_item', $actions, 'ajax_anonymize' );
 		$this->add_action( 'wp_ajax_omniprivacy_ignore_item', $actions, 'ajax_ignore' );
 
@@ -113,12 +121,27 @@ class OmniPrivacy_Loader {
 
 		$this->add_action( 'wp_ajax_nopriv_omniprivacy_request_magic_link', $magic_link, 'ajax_send_link' );
 		$this->add_action( 'wp_ajax_omniprivacy_request_magic_link', $magic_link, 'ajax_send_link' );
+		$this->add_action( 'wp_ajax_nopriv_omniprivacy_submit_deletion', $deletion, 'ajax_submit_deletion' );
+		$this->add_action( 'wp_ajax_omniprivacy_submit_deletion', $deletion, 'ajax_submit_deletion' );
 		$this->add_action( 'wp_ajax_omniprivacy_approve_deletion', $deletion, 'ajax_approve' );
 		$this->add_action( 'wp_ajax_omniprivacy_reject_deletion', $deletion, 'ajax_reject' );
 
 		// Reporting.
 		$consent = new OmniPrivacy_Consent_Log();
 		$this->add_action( 'omniprivacy_consent_recorded', $consent, 'record', 10, 3 );
+
+		// Compatibilité tierce.
+		$legal_shield = new OmniPrivacy_Legal_Shield();
+		$legal_shield->register_hooks();
+
+		$woo_compat = new OmniPrivacy_WooCommerce_Scanner();
+		$woo_compat->register_hooks();
+
+		$cf7_compat = new OmniPrivacy_CF7_Scanner();
+		$cf7_compat->register_hooks();
+
+		$wpforms_compat = new OmniPrivacy_WPForms_Scanner();
+		$wpforms_compat->register_hooks();
 
 		// Planification des tâches récurrentes.
 		$this->add_action( 'init', $this, 'schedule_recurring_tasks' );

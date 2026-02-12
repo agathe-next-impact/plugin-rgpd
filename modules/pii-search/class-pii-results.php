@@ -87,11 +87,13 @@ class OmniPrivacy_PII_Results extends WP_List_Table {
 
 		$where_sql = implode( ' AND ', $where );
 
-		// Tri.
-		$orderby = isset( $_GET['orderby'] ) ? sanitize_sql_orderby( wp_unslash( $_GET['orderby'] ) . ' ' . ( $_GET['order'] ?? 'ASC' ) ) : 'scan_date DESC';
-		if ( ! $orderby ) {
-			$orderby = 'scan_date DESC';
-		}
+		// Tri (whitelist strict pour éviter l'injection SQL).
+		$allowed_orderby = array( 'pattern_type', 'source_type', 'status', 'scan_date' );
+		$order_col       = isset( $_GET['orderby'] ) && in_array( $_GET['orderby'], $allowed_orderby, true )
+			? $_GET['orderby']
+			: 'scan_date';
+		$order_dir       = isset( $_GET['order'] ) && 'DESC' === strtoupper( $_GET['order'] ) ? 'DESC' : 'ASC';
+		$orderby         = $order_col . ' ' . $order_dir;
 
 		// Compter le total.
 		$count_query = "SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results WHERE {$where_sql}";
