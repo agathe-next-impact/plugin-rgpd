@@ -206,6 +206,21 @@ class OmniPrivacy_Settings {
 			'omniprivacy-settings'
 		);
 
+		register_setting( 'omniprivacy_settings', 'omniprivacy_portal_page_id', array(
+			'type'              => 'integer',
+			'sanitize_callback' => 'absint',
+			'default'           => 0,
+		) );
+
+		add_settings_field(
+			'omniprivacy_portal_page_id',
+			__( 'Page du portail visiteur', 'omniprivacy-pro' ),
+			array( $this, 'field_page_dropdown' ),
+			'omniprivacy-settings',
+			'omniprivacy_portal',
+			array( 'option' => 'omniprivacy_portal_page_id' )
+		);
+
 		register_setting( 'omniprivacy_settings', 'omniprivacy_magic_link_expiry', array(
 			'type'              => 'integer',
 			'sanitize_callback' => 'absint',
@@ -288,6 +303,22 @@ class OmniPrivacy_Settings {
 			esc_attr( $args['option'] ),
 			esc_textarea( $value )
 		);
+		if ( ! empty( $args['description'] ) ) {
+			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
+		}
+	}
+
+	/**
+	 * Dropdown de sélection de page WordPress.
+	 */
+	public function field_page_dropdown( $args ) {
+		$selected = get_option( $args['option'], 0 );
+		wp_dropdown_pages( array(
+			'name'              => esc_attr( $args['option'] ),
+			'selected'          => absint( $selected ),
+			'show_option_none'  => __( '— Sélectionner une page —', 'omniprivacy-pro' ),
+			'option_none_value' => 0,
+		) );
 		if ( ! empty( $args['description'] ) ) {
 			printf( '<p class="description">%s</p>', esc_html( $args['description'] ) );
 		}

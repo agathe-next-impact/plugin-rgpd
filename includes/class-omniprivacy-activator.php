@@ -169,6 +169,7 @@ class OmniPrivacy_Activator {
 			'omniprivacy_log_rotation_enabled' => 1,
 			'omniprivacy_log_retention_days'  => 30,
 			'omniprivacy_scan_batch_size'     => 100,
+			'omniprivacy_portal_page_id'     => 0,
 			'omniprivacy_magic_link_expiry'   => 3600,
 			'omniprivacy_magic_link_rate_limit' => 3,
 		);
