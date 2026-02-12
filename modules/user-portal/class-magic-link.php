@@ -23,10 +23,13 @@ class OmniPrivacy_Magic_Link {
 			wp_send_json_error( array( 'message' => __( 'Adresse email invalide.', 'omniprivacy-pro' ) ) );
 		}
 
-		// Rate limiting.
+		// Nettoyage des tokens expirés (maintenance opportuniste).
+		$this->cleanup_expired_tokens();
+
+		// Rate limiting — retourner un succès silencieux pour ne pas révéler l'existence de l'email.
 		if ( $this->is_rate_limited( $email ) ) {
-			wp_send_json_error( array(
-				'message' => __( 'Trop de demandes. Veuillez réessayer plus tard.', 'omniprivacy-pro' ),
+			wp_send_json_success( array(
+				'message' => __( 'Un lien d\'accès vous a été envoyé par email.', 'omniprivacy-pro' ),
 			) );
 		}
 
@@ -157,5 +160,22 @@ class OmniPrivacy_Magic_Link {
 			);
 		}
 		return ob_get_clean();
+	}
+
+	/**
+	 * Supprime les tokens expirés ou utilisés de la table (maintenance).
+	 * Appelé de façon opportuniste lors de chaque demande de magic link
+	 * pour éviter la croissance indéfinie de la table.
+	 */
+	private function cleanup_expired_tokens() {
+		global $wpdb;
+
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->prefix}omniprivacy_magic_tokens WHERE expires_at < %s OR used = %d",
+				gmdate( 'Y-m-d H:i:s' ),
+				1
+			)
+		);
 	}
 }

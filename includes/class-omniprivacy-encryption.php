@@ -20,15 +20,37 @@ class OmniPrivacy_Encryption {
 	 * @return string Clé de 32 octets.
 	 */
 	private static function get_key() {
-		$salt = defined( 'AUTH_KEY' ) ? AUTH_KEY : 'omniprivacy-fallback-key';
+		$salt = defined( 'AUTH_KEY' ) && AUTH_KEY !== '' ? AUTH_KEY : '';
+
+		if ( '' === $salt ) {
+			// Pas de clé secrète : log un avertissement une seule fois par requête.
+			if ( ! did_action( 'omniprivacy_weak_key_warning' ) ) {
+				do_action( 'omniprivacy_weak_key_warning' );
+				error_log( 'OmniPrivacy Pro: AUTH_KEY is not defined in wp-config.php. Encryption uses a weak fallback key. Please define AUTH_KEY.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			}
+			$salt = 'omniprivacy-fallback-key';
+		}
+
 		return hash( 'sha256', $salt . 'omniprivacy-encryption-salt', true );
 	}
 
 	/**
-	 * Chiffre une chaîne.
+	 * Dérive une clé HMAC séparée (pour Encrypt-then-MAC).
+	 *
+	 * @return string Clé HMAC de 32 octets.
+	 */
+	private static function get_mac_key() {
+		$salt = defined( 'AUTH_KEY' ) && AUTH_KEY !== '' ? AUTH_KEY : 'omniprivacy-fallback-key';
+		return hash( 'sha256', $salt . 'omniprivacy-mac-salt', true );
+	}
+
+	/**
+	 * Chiffre une chaîne avec Encrypt-then-MAC.
+	 *
+	 * Format : base64( IV + ciphertext + HMAC-SHA256(IV + ciphertext) )
 	 *
 	 * @param string $plaintext Données en clair.
-	 * @return string Données chiffrées (base64 : IV + ciphertext).
+	 * @return string Données chiffrées (base64).
 	 */
 	public static function encrypt( $plaintext ) {
 		$key    = self::get_key();
@@ -41,11 +63,18 @@ class OmniPrivacy_Encryption {
 			return '';
 		}
 
-		return base64_encode( $iv . $ciphertext ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		// Encrypt-then-MAC : signer IV + ciphertext.
+		$mac_data = $iv . $ciphertext;
+		$mac      = hash_hmac( 'sha256', $mac_data, self::get_mac_key(), true );
+
+		return base64_encode( $mac_data . $mac ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 	}
 
 	/**
-	 * Déchiffre une chaîne.
+	 * Déchiffre une chaîne avec vérification MAC.
+	 *
+	 * Rétrocompatible avec les données chiffrées avant l'ajout du MAC
+	 * (IV + ciphertext sans HMAC).
 	 *
 	 * @param string $encrypted Données chiffrées (base64).
 	 * @return string Données en clair, ou chaîne vide en cas d'erreur.
@@ -59,6 +88,22 @@ class OmniPrivacy_Encryption {
 			return '';
 		}
 
+		$mac_len = 32; // SHA-256 = 32 octets.
+
+		// Tenter le déchiffrement avec vérification MAC (nouveau format).
+		if ( strlen( $data ) > $iv_len + $mac_len ) {
+			$mac_data = substr( $data, 0, -$mac_len );
+			$mac      = substr( $data, -$mac_len );
+
+			if ( hash_equals( hash_hmac( 'sha256', $mac_data, self::get_mac_key(), true ), $mac ) ) {
+				$iv         = substr( $mac_data, 0, $iv_len );
+				$ciphertext = substr( $mac_data, $iv_len );
+				$plaintext  = openssl_decrypt( $ciphertext, self::CIPHER, $key, OPENSSL_RAW_DATA, $iv );
+				return ( false === $plaintext ) ? '' : $plaintext;
+			}
+		}
+
+		// Rétrocompatibilité : ancien format sans MAC (IV + ciphertext).
 		$iv         = substr( $data, 0, $iv_len );
 		$ciphertext = substr( $data, $iv_len );
 

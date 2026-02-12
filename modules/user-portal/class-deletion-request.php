@@ -18,9 +18,12 @@ class OmniPrivacy_Deletion_Request {
 	public function ajax_submit_deletion() {
 		check_ajax_referer( 'omniprivacy_portal_nonce', 'nonce' );
 
-		$email = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
-		if ( ! is_email( $email ) ) {
-			wp_send_json_error( array( 'message' => __( 'Adresse email invalide.', 'omniprivacy-pro' ) ) );
+		// Vérifier le jeton signé qui lie l'email à la session authentifiée (anti-usurpation).
+		$signed_token = isset( $_POST['auth_token'] ) ? sanitize_text_field( wp_unslash( $_POST['auth_token'] ) ) : '';
+		$email        = self::verify_auth_token( $signed_token );
+
+		if ( ! $email ) {
+			wp_send_json_error( array( 'message' => __( 'Session expirée. Veuillez redemander un lien d\'accès.', 'omniprivacy-pro' ) ) );
 		}
 
 		$raw_items = isset( $_POST['items'] ) ? wp_unslash( $_POST['items'] ) : array();
@@ -42,6 +45,13 @@ class OmniPrivacy_Deletion_Request {
 
 		if ( empty( $items ) ) {
 			wp_send_json_error( array( 'message' => __( 'Éléments invalides.', 'omniprivacy-pro' ) ) );
+		}
+
+		// Vérifier que chaque item appartient bien à cet email (protection IDOR).
+		$items = $this->verify_ownership( $items, $email );
+
+		if ( empty( $items ) ) {
+			wp_send_json_error( array( 'message' => __( 'Aucun élément valide pour cet email.', 'omniprivacy-pro' ) ) );
 		}
 
 		$request_id = $this->submit_request( $email, $items );
@@ -190,6 +200,155 @@ class OmniPrivacy_Deletion_Request {
 		$this->log_audit( 'rejected', $request_id, '' );
 
 		wp_send_json_success( array( 'message' => __( 'Demande rejetée.', 'omniprivacy-pro' ) ) );
+	}
+
+	/**
+	 * Génère un jeton signé liant un email à une session authentifiée.
+	 * Valide 1 heure. Utilisé dans le formulaire de suppression pour empêcher
+	 * l'usurpation d'email côté client.
+	 *
+	 * @param string $email Email authentifié via magic link.
+	 * @return string Jeton signé (base64).
+	 */
+	public static function generate_auth_token( $email ) {
+		$expiry  = time() + HOUR_IN_SECONDS;
+		$payload = $email . '|' . $expiry;
+		$sig     = OmniPrivacy_Encryption::hmac_sign( $payload );
+		return base64_encode( $payload . '|' . $sig ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+	}
+
+	/**
+	 * Vérifie un jeton signé et retourne l'email authentifié.
+	 *
+	 * @param string $token Jeton signé (base64).
+	 * @return string|false Email ou false si invalide/expiré.
+	 */
+	public static function verify_auth_token( $token ) {
+		$decoded = base64_decode( $token, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+		if ( ! $decoded ) {
+			return false;
+		}
+
+		$parts = explode( '|', $decoded, 3 );
+		if ( count( $parts ) !== 3 ) {
+			return false;
+		}
+
+		list( $email, $expiry, $sig ) = $parts;
+
+		// Vérifier l'expiration.
+		if ( (int) $expiry < time() ) {
+			return false;
+		}
+
+		// Vérifier la signature HMAC.
+		$expected_payload = $email . '|' . $expiry;
+		if ( ! OmniPrivacy_Encryption::hmac_verify( $expected_payload, $sig ) ) {
+			return false;
+		}
+
+		return sanitize_email( $email );
+	}
+
+	/**
+	 * Vérifie que chaque item appartient bien à l'email demandeur (protection IDOR).
+	 *
+	 * @param array  $items Éléments demandés.
+	 * @param string $email Email authentifié du demandeur.
+	 * @return array Éléments vérifiés.
+	 */
+	private function verify_ownership( $items, $email ) {
+		$verified = array();
+
+		foreach ( $items as $item ) {
+			$type = $item['type'] ?? '';
+			$id   = absint( $item['id'] ?? 0 );
+
+			if ( ! $id ) {
+				continue;
+			}
+
+			$owns = false;
+
+			switch ( $type ) {
+				case 'comment':
+					$comment = get_comment( $id );
+					$owns    = $comment && strtolower( $comment->comment_author_email ) === strtolower( $email );
+					break;
+
+				case 'account':
+					$user = get_userdata( $id );
+					$owns = $user && strtolower( $user->user_email ) === strtolower( $email );
+					break;
+
+				case 'scan_result':
+					global $wpdb;
+					$matched = $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT matched_value FROM {$wpdb->prefix}omniprivacy_scan_results WHERE id = %d AND status = %s",
+							$id,
+							'active'
+						)
+					);
+					$owns = $matched && strtolower( $matched ) === strtolower( $email );
+					break;
+
+				case 'order':
+					if ( function_exists( 'wc_get_order' ) ) {
+						$order = wc_get_order( $id );
+						$owns  = $order && strtolower( $order->get_billing_email() ) === strtolower( $email );
+					}
+					break;
+
+				case 'cf7_submission':
+					$meta_email = get_post_meta( $id, '_from_email', true );
+					$owns       = $meta_email && strtolower( $meta_email ) === strtolower( $email );
+					break;
+
+				case 'wpforms_entry':
+					global $wpdb;
+					$table = $wpdb->prefix . 'wpforms_entries';
+					$entry = $wpdb->get_var(
+						$wpdb->prepare(
+							"SELECT fields FROM {$table} WHERE entry_id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+							$id
+						)
+					);
+					if ( $entry ) {
+						$fields = json_decode( $entry, true );
+						$owns   = is_array( $fields ) && $this->wpforms_fields_contain_email( $fields, $email );
+					}
+					break;
+
+				default:
+					// Types inconnus : rejetés par sécurité.
+					$owns = false;
+					break;
+			}
+
+			if ( $owns ) {
+				$verified[] = $item;
+			}
+		}
+
+		return $verified;
+	}
+
+	/**
+	 * Vérifie si les champs WPForms contiennent l'email.
+	 *
+	 * @param array  $fields Champs décodés.
+	 * @param string $email  Email à vérifier.
+	 * @return bool
+	 */
+	private function wpforms_fields_contain_email( $fields, $email ) {
+		foreach ( $fields as $field ) {
+			$value = $field['value'] ?? '';
+			if ( is_string( $value ) && strtolower( $value ) === strtolower( $email ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -54,7 +54,7 @@
 			$.post(omniprivacyPortal.ajaxUrl, {
 				action: 'omniprivacy_submit_deletion',
 				nonce: omniprivacyPortal.nonce,
-				email: $form.find('input[name="email"]').val(),
+				auth_token: $form.find('input[name="auth_token"]').val(),
 				items: items
 			}, function (response) {
 				if (response.success) {

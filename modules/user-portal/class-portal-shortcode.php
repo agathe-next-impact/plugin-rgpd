@@ -103,7 +103,8 @@ class OmniPrivacy_Portal_Shortcode {
 			<p><?php printf( esc_html__( 'Données associées à : %s', 'omniprivacy-pro' ), esc_html( $email ) ); ?></p>
 
 			<form id="omniprivacy-deletion-form" method="post">
-				<input type="hidden" name="email" value="<?php echo esc_attr( $email ); ?>" />
+				<?php $auth_token = OmniPrivacy_Deletion_Request::generate_auth_token( $email ); ?>
+				<input type="hidden" name="auth_token" value="<?php echo esc_attr( $auth_token ); ?>" />
 
 				<?php if ( ! empty( $data['comments'] ) ) : ?>
 					<h3><?php esc_html_e( 'Commentaires', 'omniprivacy-pro' ); ?></h3>

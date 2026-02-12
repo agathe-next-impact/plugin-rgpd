@@ -125,13 +125,22 @@ class OmniPrivacy_PII_Actions {
 	private function replace_in_source( $item, $replacement ) {
 		global $wpdb;
 
+		// Whitelist stricte des colonnes autorisées par type de source (anti-injection de colonne).
+		$allowed_fields = array(
+			'post'    => array( 'post_title', 'post_content', 'post_excerpt' ),
+			'comment' => array( 'comment_author', 'comment_author_email', 'comment_content' ),
+		);
+
 		switch ( $item->source_type ) {
 			case 'post':
 				$post = get_post( $item->source_id );
 				if ( ! $post ) {
 					return false;
 				}
-				$field   = $item->field_name;
+				$field = $item->field_name;
+				if ( ! in_array( $field, $allowed_fields['post'], true ) ) {
+					return false;
+				}
 				$current = $post->$field ?? '';
 				$updated = str_replace( $item->matched_value, $replacement, $current );
 				return (bool) $wpdb->update(
@@ -155,7 +164,10 @@ class OmniPrivacy_PII_Actions {
 				if ( ! $comment ) {
 					return false;
 				}
-				$field   = $item->field_name;
+				$field = $item->field_name;
+				if ( ! in_array( $field, $allowed_fields['comment'], true ) ) {
+					return false;
+				}
 				$current = $comment->$field ?? '';
 				$updated = str_replace( $item->matched_value, $replacement, $current );
 				return (bool) $wpdb->update(
