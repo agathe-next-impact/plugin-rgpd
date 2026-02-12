@@ -41,6 +41,27 @@ class OmniPrivacy_PII_Scanner {
 	 */
 	private $all_steps = array();
 
+	/**
+	 * Cache mémoire des éléments ignorés (clé = "source_id|field_name").
+	 *
+	 * @var array|null
+	 */
+	private $ignored_cache = null;
+
+	/**
+	 * Type de source du cache ignoré courant.
+	 *
+	 * @var string
+	 */
+	private $ignored_cache_type = '';
+
+	/**
+	 * Buffer des résultats PII à insérer en batch.
+	 *
+	 * @var array
+	 */
+	private $pending_results = array();
+
 	public function __construct() {
 		$this->patterns = array(
 			'email'    => '/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/',
@@ -95,8 +116,9 @@ class OmniPrivacy_PII_Scanner {
 			)
 		);
 
-		// Invalider le cache transient.
+		// Invalider les caches transient.
 		delete_transient( 'omniprivacy_scan_results_cache' );
+		delete_transient( 'omniprivacy_dashboard_stats' );
 
 		$scan_id = wp_generate_uuid4();
 
@@ -279,8 +301,9 @@ class OmniPrivacy_PII_Scanner {
 		update_option( 'omniprivacy_last_scan_date', current_time( 'mysql' ) );
 		update_option( 'omniprivacy_last_scan_id', $scan_id );
 
-		// Invalider le cache.
+		// Invalider les caches.
 		delete_transient( 'omniprivacy_scan_results_cache' );
+		delete_transient( 'omniprivacy_dashboard_stats' );
 
 		// Marquer la progression comme terminée.
 		$progress = get_transient( 'omniprivacy_scan_progress_' . $scan_id );
@@ -341,6 +364,8 @@ class OmniPrivacy_PII_Scanner {
 	private function scan_posts( $offset, $batch_size ) {
 		global $wpdb;
 
+		$this->preload_ignored( 'post' );
+
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT ID, post_title, post_content, post_excerpt, post_type
@@ -360,6 +385,8 @@ class OmniPrivacy_PII_Scanner {
 			$this->scan_text( $post->post_excerpt, 'post', $post->ID, 'post_excerpt' );
 		}
 
+		$this->flush_pending_results();
+
 		return count( $posts ) >= $batch_size;
 	}
 
@@ -368,6 +395,8 @@ class OmniPrivacy_PII_Scanner {
 	 */
 	private function scan_postmeta( $offset, $batch_size ) {
 		global $wpdb;
+
+		$this->preload_ignored( 'postmeta' );
 
 		$metas = $wpdb->get_results(
 			$wpdb->prepare(
@@ -394,6 +423,8 @@ class OmniPrivacy_PII_Scanner {
 			}
 		}
 
+		$this->flush_pending_results();
+
 		return count( $metas ) >= $batch_size;
 	}
 
@@ -402,6 +433,8 @@ class OmniPrivacy_PII_Scanner {
 	 */
 	private function scan_comments( $offset, $batch_size ) {
 		global $wpdb;
+
+		$this->preload_ignored( 'comment' );
 
 		$comments = $wpdb->get_results(
 			$wpdb->prepare(
@@ -422,6 +455,8 @@ class OmniPrivacy_PII_Scanner {
 			$this->scan_text( $comment->comment_content, 'comment', $comment->comment_ID, 'comment_content' );
 		}
 
+		$this->flush_pending_results();
+
 		return count( $comments ) >= $batch_size;
 	}
 
@@ -430,6 +465,8 @@ class OmniPrivacy_PII_Scanner {
 	 */
 	private function scan_media( $offset, $batch_size ) {
 		global $wpdb;
+
+		$this->preload_ignored( 'media' );
 
 		$media = $wpdb->get_results(
 			$wpdb->prepare(
@@ -452,11 +489,114 @@ class OmniPrivacy_PII_Scanner {
 			}
 		}
 
+		$this->flush_pending_results();
+
 		return count( $media ) >= $batch_size;
 	}
 
 	/**
-	 * Applique les patterns regex à un texte et stocke les résultats.
+	 * Pré-charge les éléments ignorés pour un type de source en une seule requête.
+	 *
+	 * @param string $source_type Type de source (post, comment, etc.).
+	 */
+	private function preload_ignored( $source_type ) {
+		if ( $this->ignored_cache_type === $source_type && null !== $this->ignored_cache ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT item_id, field_name FROM {$wpdb->prefix}omniprivacy_ignored_items WHERE item_type = %s",
+				$source_type
+			)
+		);
+
+		$this->ignored_cache = array();
+		foreach ( $rows as $row ) {
+			$this->ignored_cache[ $row->item_id . '|' . $row->field_name ] = true;
+		}
+		$this->ignored_cache_type = $source_type;
+	}
+
+	/**
+	 * Insère les résultats en attente en batch, en évitant les doublons.
+	 * Remplace les INSERT individuels + SELECT de vérification par
+	 * une seule lecture groupée + un INSERT multi-valeurs.
+	 */
+	private function flush_pending_results() {
+		if ( empty( $this->pending_results ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$table = $wpdb->prefix . 'omniprivacy_scan_results';
+
+		// Collecter les source_ids uniques pour charger les résultats existants.
+		$ids_by_type = array();
+		foreach ( $this->pending_results as $r ) {
+			$ids_by_type[ $r['source_type'] ][ $r['source_id'] ] = true;
+		}
+
+		// Charger les résultats existants en une requête par source_type.
+		$existing_set = array();
+		foreach ( $ids_by_type as $src_type => $ids_map ) {
+			$source_ids   = array_keys( $ids_map );
+			$placeholders = implode( ',', array_fill( 0, count( $source_ids ), '%d' ) );
+			$query_args   = array_merge( array( $src_type ), $source_ids );
+
+			$existing_rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT source_type, source_id, field_name, matched_value, pattern_type
+					FROM {$table}
+					WHERE source_type = %s AND source_id IN ({$placeholders})", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+					$query_args
+				)
+			);
+
+			foreach ( $existing_rows as $row ) {
+				$key = $row->source_type . '|' . $row->source_id . '|' . $row->field_name . '|' . $row->matched_value . '|' . $row->pattern_type;
+				$existing_set[ $key ] = true;
+			}
+		}
+
+		// Filtrer les doublons et préparer l'insertion.
+		$to_insert = array();
+		$now       = current_time( 'mysql' );
+		foreach ( $this->pending_results as $r ) {
+			$key = $r['source_type'] . '|' . $r['source_id'] . '|' . $r['field_name'] . '|' . $r['matched_value'] . '|' . $r['pattern_type'];
+			if ( ! isset( $existing_set[ $key ] ) ) {
+				$to_insert[]          = $r;
+				$existing_set[ $key ] = true; // Éviter les doublons intra-batch.
+			}
+		}
+
+		// Insérer en chunks de 50 pour limiter la taille de la requête.
+		if ( ! empty( $to_insert ) ) {
+			foreach ( array_chunk( $to_insert, 50 ) as $chunk ) {
+				$values_list      = array();
+				$placeholders_sql = array();
+				foreach ( $chunk as $r ) {
+					$placeholders_sql[] = '(%s, %d, %s, %s, %s, %s, %s)';
+					array_push( $values_list, $r['source_type'], $r['source_id'], $r['field_name'], $r['matched_value'], $r['pattern_type'], 'active', $now );
+				}
+
+				$wpdb->query(
+					$wpdb->prepare(
+						"INSERT INTO {$table} (source_type, source_id, field_name, matched_value, pattern_type, status, scan_date)
+						VALUES " . implode( ', ', $placeholders_sql ), // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+						$values_list
+					)
+				);
+			}
+		}
+
+		$this->pending_results = array();
+	}
+
+	/**
+	 * Applique les patterns regex à un texte et bufferise les résultats.
 	 *
 	 * @param string $text        Texte à scanner.
 	 * @param string $source_type Type de source.
@@ -468,56 +608,21 @@ class OmniPrivacy_PII_Scanner {
 			return;
 		}
 
-		global $wpdb;
-
-		// Vérifier une seule fois si l'item est globalement ignoré.
-		$ignored = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_ignored_items
-				WHERE item_type = %s AND item_id = %d AND field_name = %s",
-				$source_type,
-				$source_id,
-				$field_name
-			)
-		);
-
-		if ( $ignored > 0 ) {
+		// Vérifier dans le cache mémoire des éléments ignorés (pré-chargé par preload_ignored).
+		$ignore_key = $source_id . '|' . $field_name;
+		if ( isset( $this->ignored_cache[ $ignore_key ] ) ) {
 			return;
 		}
 
 		foreach ( $this->patterns as $pattern_type => $regex ) {
 			if ( preg_match_all( $regex, $text, $matches ) ) {
 				foreach ( array_unique( $matches[0] ) as $match ) {
-					// Éviter les doublons dans les résultats.
-					$exists = $wpdb->get_var(
-						$wpdb->prepare(
-							"SELECT COUNT(*) FROM {$wpdb->prefix}omniprivacy_scan_results
-							WHERE source_type = %s AND source_id = %d AND field_name = %s
-							AND matched_value = %s AND pattern_type = %s",
-							$source_type,
-							$source_id,
-							$field_name,
-							$match,
-							$pattern_type
-						)
-					);
-
-					if ( $exists > 0 ) {
-						continue;
-					}
-
-					$wpdb->insert(
-						$wpdb->prefix . 'omniprivacy_scan_results',
-						array(
-							'source_type'   => $source_type,
-							'source_id'     => $source_id,
-							'field_name'    => $field_name,
-							'matched_value' => $match,
-							'pattern_type'  => $pattern_type,
-							'status'        => 'active',
-							'scan_date'     => current_time( 'mysql' ),
-						),
-						array( '%s', '%d', '%s', '%s', '%s', '%s', '%s' )
+					$this->pending_results[] = array(
+						'source_type'   => $source_type,
+						'source_id'     => $source_id,
+						'field_name'    => $field_name,
+						'matched_value' => $match,
+						'pattern_type'  => $pattern_type,
 					);
 				}
 			}

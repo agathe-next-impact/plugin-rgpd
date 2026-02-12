@@ -101,6 +101,8 @@ class OmniPrivacy_WPForms_Scanner {
 			}
 		}
 
+		$this->flush_scan_results();
+
 		return count( $entries ) >= $batch_size;
 	}
 

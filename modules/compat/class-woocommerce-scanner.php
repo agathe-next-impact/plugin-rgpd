@@ -92,6 +92,8 @@ class OmniPrivacy_WooCommerce_Scanner {
 			$this->scan_field( $order->customer_note, 'wc_order', $order->id, 'customer_note', $patterns );
 		}
 
+		$this->flush_scan_results();
+
 		return count( $orders ) >= $batch_size;
 	}
 
@@ -131,6 +133,8 @@ class OmniPrivacy_WooCommerce_Scanner {
 				}
 			}
 		}
+
+		$this->flush_scan_results();
 
 		return count( $addresses ) >= $batch_size;
 	}

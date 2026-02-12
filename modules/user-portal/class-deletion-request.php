@@ -100,6 +100,9 @@ class OmniPrivacy_Deletion_Request {
 
 		$request_id = $wpdb->insert_id;
 
+		// Invalider le cache du tableau de bord.
+		delete_transient( 'omniprivacy_dashboard_stats' );
+
 		// Notifier l'admin.
 		$this->notify_admin( $request_id, $email );
 
@@ -151,6 +154,9 @@ class OmniPrivacy_Deletion_Request {
 			array( '%d' )
 		);
 
+		// Invalider le cache du tableau de bord.
+		delete_transient( 'omniprivacy_dashboard_stats' );
+
 		// Générer et envoyer le certificat d'effacement.
 		$certificate = new OmniPrivacy_Erasure_Certificate();
 		$certificate->send( $request->user_email, $request_id, $deleted );
@@ -196,6 +202,9 @@ class OmniPrivacy_Deletion_Request {
 			array( '%s', '%s', '%s', '%d' ),
 			array( '%d' )
 		);
+
+		// Invalider le cache du tableau de bord.
+		delete_transient( 'omniprivacy_dashboard_stats' );
 
 		$this->log_audit( 'rejected', $request_id, '' );
 

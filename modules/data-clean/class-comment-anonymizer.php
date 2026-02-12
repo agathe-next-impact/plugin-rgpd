@@ -41,6 +41,7 @@ class OmniPrivacy_Comment_Anonymizer {
 		$offset           = 0;
 		$anonymized_count = 0;
 		$skipped_count    = 0;
+		$role_cache       = array();
 
 		do {
 			$comments = $wpdb->get_results(
@@ -63,10 +64,16 @@ class OmniPrivacy_Comment_Anonymizer {
 			}
 
 			foreach ( $comments as $comment ) {
-				// Vérifier si l'auteur a un rôle exclu.
-				if ( $comment->user_id > 0 && $this->is_excluded_role( (int) $comment->user_id, $excluded_roles ) ) {
-					$skipped_count++;
-					continue;
+				// Vérifier si l'auteur a un rôle exclu (résultat mis en cache par user_id).
+				if ( $comment->user_id > 0 ) {
+					$uid = (int) $comment->user_id;
+					if ( ! isset( $role_cache[ $uid ] ) ) {
+						$role_cache[ $uid ] = $this->is_excluded_role( $uid, $excluded_roles );
+					}
+					if ( $role_cache[ $uid ] ) {
+						$skipped_count++;
+						continue;
+					}
 				}
 
 				$wpdb->update(

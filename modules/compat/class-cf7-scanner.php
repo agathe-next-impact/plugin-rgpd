@@ -106,6 +106,8 @@ class OmniPrivacy_CF7_Scanner {
 			}
 		}
 
+		$this->flush_scan_results();
+
 		return count( $posts ) >= $batch_size;
 	}
 
