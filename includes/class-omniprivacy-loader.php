@@ -79,6 +79,7 @@ class OmniPrivacy_Loader {
 		$settings = new OmniPrivacy_Settings();
 
 		$this->add_action( 'admin_menu', $settings, 'add_admin_menu' );
+		$this->add_action( 'admin_init', $settings, 'handle_file_exports' );
 		$this->add_action( 'admin_init', $settings, 'register_settings' );
 		$this->add_action( 'admin_enqueue_scripts', $this, 'enqueue_admin_assets' );
 	}

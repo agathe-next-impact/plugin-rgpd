@@ -72,6 +72,36 @@ class OmniPrivacy_Settings {
 	}
 
 	/**
+	 * Intercepte les exports fichiers (PDF, CSV) avant tout output HTML.
+	 * Branché sur admin_init pour éviter la corruption du flux binaire.
+	 */
+	public function handle_file_exports() {
+		if ( ! isset( $_GET['page'] ) || 'omniprivacy-reports' !== $_GET['page'] || ! isset( $_GET['action'] ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_omniprivacy' ) ) {
+			return;
+		}
+
+		$action = sanitize_text_field( wp_unslash( $_GET['action'] ) );
+
+		if ( 'generate_pdf' === $action ) {
+			check_admin_referer( 'omniprivacy_generate_pdf' );
+			$generator = new OmniPrivacy_PDF_Generator();
+			$generator->generate_report();
+			exit;
+		}
+
+		if ( 'export_consent_csv' === $action ) {
+			check_admin_referer( 'omniprivacy_export_consent_csv' );
+			$consent_log = new OmniPrivacy_Consent_Log();
+			$consent_log->export_csv();
+			exit;
+		}
+	}
+
+	/**
 	 * Enregistre les réglages via Settings API.
 	 */
 	public function register_settings() {

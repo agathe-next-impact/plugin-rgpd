@@ -9,21 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Génération PDF.
-if ( isset( $_GET['action'] ) && 'generate_pdf' === $_GET['action'] ) {
-	check_admin_referer( 'omniprivacy_generate_pdf' );
-	$generator = new OmniPrivacy_PDF_Generator();
-	$generator->generate_report();
-	exit;
-}
-
-// Export CSV du registre des consentements.
-if ( isset( $_GET['action'] ) && 'export_consent_csv' === $_GET['action'] ) {
-	check_admin_referer( 'omniprivacy_export_consent_csv' );
-	$consent_export = new OmniPrivacy_Consent_Log();
-	$consent_export->export_csv();
-	exit;
-}
+// Les exports PDF/CSV sont gérés en amont via admin_init
+// (OmniPrivacy_Settings::handle_file_exports) pour éviter la corruption du flux.
 
 // Données pour l'aperçu.
 global $wpdb;
