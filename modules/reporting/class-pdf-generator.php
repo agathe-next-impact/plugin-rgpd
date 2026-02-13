@@ -184,107 +184,181 @@ class OmniPrivacy_PDF_Generator {
 	 * @param array $data Données du rapport.
 	 */
 	private function render_default_report( $data ) {
+		$score_color = $data['score'] >= 75 ? '#00a32a' : ( $data['score'] >= 50 ? '#dba617' : '#d63638' );
+		$score_label = $data['score'] >= 75 ? 'Conforme' : ( $data['score'] >= 50 ? 'Partiel' : 'Non conforme' );
+		$integrity_color = $data['consent_valid'] ? '#00a32a' : '#d63638';
 		?>
 		<!DOCTYPE html>
 		<html>
 		<head>
 			<meta charset="UTF-8">
 			<style>
-				body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
-				h1 { color: #0073aa; }
-				table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-				th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-				th { background: #f5f5f5; }
-				.score { font-size: 48px; font-weight: bold; color: <?php echo $data['score'] >= 75 ? '#46b450' : ( $data['score'] >= 50 ? '#ffb900' : '#dc3232' ); ?>; }
+				* { margin: 0; padding: 0; box-sizing: border-box; }
+				body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #1d2327; line-height: 1.5; }
+
+				/* Header */
+				.header { background: #2271b1; color: #fff; padding: 28px 32px; margin-bottom: 24px; }
+				.header h1 { font-size: 22px; margin-bottom: 4px; color: #fff; }
+				.header p { font-size: 11px; opacity: .85; }
+
+				/* Section */
+				.section { margin: 0 32px 20px; }
+				.section-title { font-size: 13px; font-weight: 700; color: #2271b1; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid #2271b1; padding-bottom: 6px; margin-bottom: 12px; }
+
+				/* Score card */
+				.score-row { display: table; width: 100%; margin: 0 32px 20px; }
+				.score-card { display: table-cell; width: 33%; background: #f8f9fa; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px; text-align: center; vertical-align: top; }
+				.score-card + .score-card { margin-left: 12px; }
+				.score-value { font-size: 36px; font-weight: 700; line-height: 1.1; }
+				.score-label { font-size: 10px; color: #646970; text-transform: uppercase; letter-spacing: .3px; margin-top: 4px; }
+
+				/* Tables */
+				table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+				th { background: #f0f0f1; color: #646970; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; padding: 8px 10px; text-align: left; border-bottom: 1px solid #c3c4c7; }
+				td { padding: 7px 10px; border-bottom: 1px solid #e8e8e8; font-size: 11px; }
+				tr:nth-child(even) td { background: #fafafa; }
+
+				/* Badges */
+				.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+				.badge-success { background: #edfaef; color: #0a5c1a; }
+				.badge-warning { background: #fef8e8; color: #8a6d00; }
+				.badge-danger  { background: #fcecec; color: #8a1c1f; }
+
+				/* Empty */
+				.empty { color: #646970; font-style: italic; padding: 12px 0; }
+
+				/* Footer */
+				.footer { position: fixed; bottom: 0; left: 0; right: 0; background: #f0f0f1; border-top: 1px solid #c3c4c7; padding: 8px 32px; font-size: 9px; color: #646970; }
 			</style>
 		</head>
 		<body>
-			<h1><?php echo esc_html( $data['site_name'] ); ?> — <?php esc_html_e( 'Rapport d\'audit RGPD', 'omniprivacy-pro' ); ?></h1>
-			<p><?php printf( esc_html__( 'Généré le %s', 'omniprivacy-pro' ), esc_html( $data['generated'] ) ); ?></p>
-			<p><?php printf( esc_html__( 'OmniPrivacy Pro v%s', 'omniprivacy-pro' ), esc_html( $data['plugin_ver'] ) ); ?></p>
+			<!-- Header -->
+			<div class="header">
+				<h1><?php echo esc_html( $data['site_name'] ); ?></h1>
+				<p><?php esc_html_e( 'Rapport d\'audit RGPD', 'omniprivacy-pro' ); ?> &mdash; <?php echo esc_html( $data['generated'] ); ?> &mdash; OmniPrivacy Pro v<?php echo esc_html( $data['plugin_ver'] ); ?></p>
+			</div>
 
-			<h2><?php esc_html_e( 'Score de conformité', 'omniprivacy-pro' ); ?></h2>
-			<p class="score"><?php echo absint( $data['score'] ); ?>/100</p>
-
-			<h2><?php esc_html_e( 'Données personnelles détectées (PII)', 'omniprivacy-pro' ); ?></h2>
-			<?php if ( ! empty( $data['pii_by_pattern'] ) ) : ?>
-				<p><?php printf( esc_html__( 'Total actif : %d', 'omniprivacy-pro' ), absint( $data['pii_total'] ) ); ?></p>
-				<table>
+			<!-- Score cards -->
+			<div style="margin: 0 32px 20px;">
+				<table style="border: none; margin: 0;">
 					<tr>
-						<th><?php esc_html_e( 'Type de pattern', 'omniprivacy-pro' ); ?></th>
-						<th><?php esc_html_e( 'Occurrences', 'omniprivacy-pro' ); ?></th>
+						<td style="width: 33%; background: #f8f9fa; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px; text-align: center; vertical-align: top;">
+							<div class="score-value" style="color: <?php echo esc_attr( $score_color ); ?>;"><?php echo absint( $data['score'] ); ?>/100</div>
+							<div class="score-label"><?php echo esc_html( $score_label ); ?></div>
+						</td>
+						<td style="width: 2%;"></td>
+						<td style="width: 33%; background: #f8f9fa; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px; text-align: center; vertical-align: top;">
+							<div class="score-value"><?php echo absint( $data['pii_total'] ); ?></div>
+							<div class="score-label"><?php esc_html_e( 'PII actives', 'omniprivacy-pro' ); ?></div>
+						</td>
+						<td style="width: 2%;"></td>
+						<td style="width: 33%; background: #f8f9fa; border: 1px solid #c3c4c7; border-radius: 4px; padding: 16px; text-align: center; vertical-align: top;">
+							<div class="score-value"><?php echo absint( $data['consent_total'] ); ?></div>
+							<div class="score-label" style="color: <?php echo esc_attr( $integrity_color ); ?>;">
+								<?php echo $data['consent_valid'] ? esc_html__( 'Consentements - OK', 'omniprivacy-pro' ) : esc_html__( 'Consentements - Erreurs', 'omniprivacy-pro' ); ?>
+							</div>
+						</td>
 					</tr>
-					<?php foreach ( $data['pii_by_pattern'] as $row ) : ?>
-						<tr>
-							<td><?php echo esc_html( $row->pattern_type ); ?></td>
-							<td><?php echo absint( $row->total ); ?></td>
-						</tr>
-					<?php endforeach; ?>
 				</table>
-			<?php else : ?>
-				<p><?php esc_html_e( 'Aucune donnée personnelle active détectée.', 'omniprivacy-pro' ); ?></p>
-			<?php endif; ?>
+			</div>
 
-			<h2><?php esc_html_e( 'Registre des consentements', 'omniprivacy-pro' ); ?></h2>
-			<p>
-				<?php printf( esc_html__( 'Entrées totales : %d', 'omniprivacy-pro' ), absint( $data['consent_total'] ) ); ?><br/>
-				<?php if ( $data['consent_valid'] ) : ?>
-					<strong style="color: #46b450;"><?php esc_html_e( 'Intégrité vérifiée', 'omniprivacy-pro' ); ?></strong>
+			<!-- PII -->
+			<div class="section">
+				<div class="section-title"><?php esc_html_e( 'Donn\u00e9es personnelles d\u00e9tect\u00e9es', 'omniprivacy-pro' ); ?></div>
+				<?php if ( ! empty( $data['pii_by_pattern'] ) ) : ?>
+					<table>
+						<tr>
+							<th><?php esc_html_e( 'Type', 'omniprivacy-pro' ); ?></th>
+							<th><?php esc_html_e( 'Occurrences', 'omniprivacy-pro' ); ?></th>
+						</tr>
+						<?php foreach ( $data['pii_by_pattern'] as $row ) : ?>
+							<tr>
+								<td><?php echo esc_html( $row->pattern_type ); ?></td>
+								<td><?php echo absint( $row->total ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</table>
 				<?php else : ?>
-					<strong style="color: #dc3232;"><?php esc_html_e( 'ATTENTION : incohérences détectées', 'omniprivacy-pro' ); ?></strong>
+					<p class="empty"><?php esc_html_e( 'Aucune donn\u00e9e personnelle active d\u00e9tect\u00e9e.', 'omniprivacy-pro' ); ?></p>
 				<?php endif; ?>
-			</p>
-			<?php if ( ! empty( $data['consent_stats'] ) ) : ?>
-				<table>
-					<tr>
-						<th><?php esc_html_e( 'Action', 'omniprivacy-pro' ); ?></th>
-						<th><?php esc_html_e( 'Total', 'omniprivacy-pro' ); ?></th>
-					</tr>
-					<?php foreach ( $data['consent_stats'] as $row ) : ?>
-						<tr>
-							<td><?php echo esc_html( ucfirst( $row->action ) ); ?></td>
-							<td><?php echo absint( $row->total ); ?></td>
-						</tr>
-					<?php endforeach; ?>
-				</table>
-			<?php endif; ?>
+			</div>
 
-			<h2><?php esc_html_e( 'Historique des nettoyages', 'omniprivacy-pro' ); ?></h2>
-			<?php if ( ! empty( $data['cleanups'] ) ) : ?>
-				<table>
-					<tr><th><?php esc_html_e( 'Action', 'omniprivacy-pro' ); ?></th><th><?php esc_html_e( 'Date', 'omniprivacy-pro' ); ?></th></tr>
-					<?php foreach ( $data['cleanups'] as $cleanup ) : ?>
+			<!-- Consentements -->
+			<div class="section">
+				<div class="section-title"><?php esc_html_e( 'Registre des consentements', 'omniprivacy-pro' ); ?></div>
+				<?php if ( ! empty( $data['consent_stats'] ) ) : ?>
+					<table>
 						<tr>
-							<td><?php echo esc_html( $cleanup->action ); ?></td>
-							<td><?php echo esc_html( $cleanup->created_at ); ?></td>
+							<th><?php esc_html_e( 'Action', 'omniprivacy-pro' ); ?></th>
+							<th><?php esc_html_e( 'Total', 'omniprivacy-pro' ); ?></th>
 						</tr>
-					<?php endforeach; ?>
-				</table>
-			<?php else : ?>
-				<p><?php esc_html_e( 'Aucun nettoyage enregistré.', 'omniprivacy-pro' ); ?></p>
-			<?php endif; ?>
+						<?php foreach ( $data['consent_stats'] as $row ) : ?>
+							<tr>
+								<td><?php echo esc_html( ucfirst( $row->action ) ); ?></td>
+								<td><?php echo absint( $row->total ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</table>
+				<?php endif; ?>
+			</div>
 
-			<h2><?php esc_html_e( 'Demandes utilisateurs', 'omniprivacy-pro' ); ?></h2>
-			<?php if ( ! empty( $data['requests'] ) ) : ?>
-				<table>
-					<tr>
-						<th>#</th>
-						<th><?php esc_html_e( 'Statut', 'omniprivacy-pro' ); ?></th>
-						<th><?php esc_html_e( 'Créée', 'omniprivacy-pro' ); ?></th>
-						<th><?php esc_html_e( 'Traitée', 'omniprivacy-pro' ); ?></th>
-					</tr>
-					<?php foreach ( $data['requests'] as $request ) : ?>
+			<!-- Nettoyages -->
+			<div class="section">
+				<div class="section-title"><?php esc_html_e( 'Historique des nettoyages', 'omniprivacy-pro' ); ?></div>
+				<?php if ( ! empty( $data['cleanups'] ) ) : ?>
+					<table>
 						<tr>
-							<td><?php echo absint( $request->id ); ?></td>
-							<td><?php echo esc_html( $request->status ); ?></td>
-							<td><?php echo esc_html( $request->created_at ); ?></td>
-							<td><?php echo esc_html( $request->processed_at ?: '—' ); ?></td>
+							<th><?php esc_html_e( 'Action', 'omniprivacy-pro' ); ?></th>
+							<th><?php esc_html_e( 'Date', 'omniprivacy-pro' ); ?></th>
 						</tr>
-					<?php endforeach; ?>
-				</table>
-			<?php else : ?>
-				<p><?php esc_html_e( 'Aucune demande enregistrée.', 'omniprivacy-pro' ); ?></p>
-			<?php endif; ?>
+						<?php foreach ( $data['cleanups'] as $cleanup ) : ?>
+							<tr>
+								<td><?php echo esc_html( $cleanup->action ); ?></td>
+								<td><?php echo esc_html( $cleanup->created_at ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</table>
+				<?php else : ?>
+					<p class="empty"><?php esc_html_e( 'Aucun nettoyage enregistr\u00e9.', 'omniprivacy-pro' ); ?></p>
+				<?php endif; ?>
+			</div>
+
+			<!-- Demandes -->
+			<div class="section">
+				<div class="section-title"><?php esc_html_e( 'Demandes utilisateurs', 'omniprivacy-pro' ); ?></div>
+				<?php if ( ! empty( $data['requests'] ) ) : ?>
+					<table>
+						<tr>
+							<th>#</th>
+							<th><?php esc_html_e( 'Statut', 'omniprivacy-pro' ); ?></th>
+							<th><?php esc_html_e( 'Cr\u00e9\u00e9e', 'omniprivacy-pro' ); ?></th>
+							<th><?php esc_html_e( 'Trait\u00e9e', 'omniprivacy-pro' ); ?></th>
+						</tr>
+						<?php foreach ( $data['requests'] as $request ) :
+							$badge_class = 'badge-warning';
+							if ( 'approved' === $request->status ) {
+								$badge_class = 'badge-success';
+							} elseif ( 'rejected' === $request->status ) {
+								$badge_class = 'badge-danger';
+							}
+						?>
+							<tr>
+								<td><?php echo absint( $request->id ); ?></td>
+								<td><span class="badge <?php echo esc_attr( $badge_class ); ?>"><?php echo esc_html( ucfirst( $request->status ) ); ?></span></td>
+								<td><?php echo esc_html( $request->created_at ); ?></td>
+								<td><?php echo esc_html( $request->processed_at ?: '—' ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+					</table>
+				<?php else : ?>
+					<p class="empty"><?php esc_html_e( 'Aucune demande enregistr\u00e9e.', 'omniprivacy-pro' ); ?></p>
+				<?php endif; ?>
+			</div>
+
+			<!-- Footer -->
+			<div class="footer">
+				<?php echo esc_html( $data['site_url'] ); ?> &mdash; OmniPrivacy Pro v<?php echo esc_html( $data['plugin_ver'] ); ?> &mdash; <?php esc_html_e( 'Document confidentiel', 'omniprivacy-pro' ); ?>
+			</div>
 		</body>
 		</html>
 		<?php

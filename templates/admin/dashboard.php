@@ -9,7 +9,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 global $wpdb;
 
-// Données du tableau de bord (mises en cache 5 min via transient).
 $last_scan      = get_option( 'omniprivacy_last_scan_date', '' );
 $dashboard_data = get_transient( 'omniprivacy_dashboard_stats' );
 
@@ -34,39 +33,47 @@ $score_class   = $score >= 75 ? 'good' : ( $score >= 50 ? 'medium' : 'poor' );
 ?>
 
 <div class="wrap omniprivacy-wrap">
-	<h1><?php esc_html_e( 'OmniPrivacy Pro — Tableau de bord', 'omniprivacy-pro' ); ?></h1>
+	<div class="omniprivacy-page-header">
+		<span class="dashicons dashicons-shield"></span>
+		<div class="omniprivacy-page-meta">
+			<h1><?php esc_html_e( 'Tableau de bord', 'omniprivacy-pro' ); ?></h1>
+			<p class="omniprivacy-page-desc"><?php esc_html_e( 'Vue d\'ensemble de la conformit\u00e9 RGPD de votre site.', 'omniprivacy-pro' ); ?></p>
+		</div>
+	</div>
 
 	<div class="omniprivacy-dashboard-cards">
 		<div class="omniprivacy-card">
-			<h3><?php esc_html_e( 'Score de conformité', 'omniprivacy-pro' ); ?></h3>
+			<h3><?php esc_html_e( 'Conformit\u00e9', 'omniprivacy-pro' ); ?></h3>
 			<div class="omniprivacy-score <?php echo esc_attr( $score_class ); ?>">
 				<?php echo absint( $score ); ?>/100
 			</div>
+			<span class="omniprivacy-score-label"><?php esc_html_e( 'Score global', 'omniprivacy-pro' ); ?></span>
 		</div>
 
 		<div class="omniprivacy-card">
-			<h3><?php esc_html_e( 'Données personnelles détectées', 'omniprivacy-pro' ); ?></h3>
+			<h3><?php esc_html_e( 'PII d\u00e9tect\u00e9es', 'omniprivacy-pro' ); ?></h3>
 			<div class="omniprivacy-score"><?php echo absint( $active_pii ); ?></div>
-			<p>
+			<span class="omniprivacy-score-label">
 				<?php if ( $last_scan ) : ?>
-					<?php printf( esc_html__( 'Dernier scan : %s', 'omniprivacy-pro' ), esc_html( $last_scan ) ); ?>
+					<?php printf( esc_html__( 'Scan : %s', 'omniprivacy-pro' ), esc_html( $last_scan ) ); ?>
 				<?php else : ?>
-					<?php esc_html_e( 'Aucun scan effectué', 'omniprivacy-pro' ); ?>
+					<?php esc_html_e( 'Aucun scan', 'omniprivacy-pro' ); ?>
 				<?php endif; ?>
-			</p>
+			</span>
 		</div>
 
 		<div class="omniprivacy-card">
 			<h3><?php esc_html_e( 'Demandes en attente', 'omniprivacy-pro' ); ?></h3>
 			<div class="omniprivacy-score"><?php echo absint( $pending_reqs ); ?></div>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=omniprivacy-requests' ) ); ?>" class="button">
-				<?php esc_html_e( 'Gérer', 'omniprivacy-pro' ); ?>
-			</a>
+			<span class="omniprivacy-score-label">
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=omniprivacy-requests' ) ); ?>"><?php esc_html_e( 'G\u00e9rer', 'omniprivacy-pro' ); ?></a>
+			</span>
 		</div>
 
 		<div class="omniprivacy-card">
-			<h3><?php esc_html_e( 'Nettoyages effectués', 'omniprivacy-pro' ); ?></h3>
+			<h3><?php esc_html_e( 'Nettoyages', 'omniprivacy-pro' ); ?></h3>
 			<div class="omniprivacy-score"><?php echo absint( $total_cleaned ); ?></div>
+			<span class="omniprivacy-score-label"><?php esc_html_e( 'Anonymisations effectu\u00e9es', 'omniprivacy-pro' ); ?></span>
 		</div>
 	</div>
 
@@ -77,10 +84,10 @@ $score_class   = $score >= 75 ? 'good' : ( $score >= 50 ? 'medium' : 'poor' );
 				<?php esc_html_e( 'Lancer un scan PII', 'omniprivacy-pro' ); ?>
 			</a>
 			<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=omniprivacy-reports&action=generate_pdf' ), 'omniprivacy_generate_pdf' ) ); ?>" class="button">
-				<?php esc_html_e( 'Générer un rapport PDF', 'omniprivacy-pro' ); ?>
+				<?php esc_html_e( 'Rapport PDF', 'omniprivacy-pro' ); ?>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=omniprivacy-settings' ) ); ?>" class="button">
-				<?php esc_html_e( 'Réglages', 'omniprivacy-pro' ); ?>
+				<?php esc_html_e( 'R\u00e9glages', 'omniprivacy-pro' ); ?>
 			</a>
 		</div>
 	</div>
