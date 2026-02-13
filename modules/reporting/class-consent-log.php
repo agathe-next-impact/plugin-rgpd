@@ -123,6 +123,49 @@ class OmniPrivacy_Consent_Log {
 	}
 
 	/**
+	 * Exporte le registre des consentements au format CSV.
+	 */
+	public function export_csv() {
+		if ( ! current_user_can( 'manage_omniprivacy' ) ) {
+			wp_die( esc_html__( 'Accès non autorisé.', 'omniprivacy-pro' ) );
+		}
+
+		global $wpdb;
+
+		$entries = $wpdb->get_results(
+			"SELECT id, ip_hash, action, categories_json, user_agent_hash, created_at
+			FROM {$wpdb->prefix}omniprivacy_consent_log
+			ORDER BY created_at DESC"
+		);
+
+		$filename = 'omniprivacy-consent-log-' . gmdate( 'Y-m-d' ) . '.csv';
+
+		header( 'Content-Type: text/csv; charset=UTF-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+		header( 'Pragma: no-cache' );
+
+		$output = fopen( 'php://output', 'w' );
+		// BOM UTF-8 pour compatibilité Excel.
+		fwrite( $output, "\xEF\xBB\xBF" );
+
+		fputcsv( $output, array( 'ID', 'IP (hash)', 'Action', 'Categories', 'User-Agent (hash)', 'Date' ) );
+
+		foreach ( $entries as $entry ) {
+			fputcsv( $output, array(
+				$entry->id,
+				$entry->ip_hash,
+				$entry->action,
+				$entry->categories_json,
+				$entry->user_agent_hash,
+				$entry->created_at,
+			) );
+		}
+
+		fclose( $output );
+		exit;
+	}
+
+	/**
 	 * Récupère les entrées du journal pour l'interface admin (lecture seule).
 	 *
 	 * @param array $args Arguments de filtrage (date_from, date_to, per_page, offset).

@@ -79,14 +79,49 @@ class OmniPrivacy_PDF_Generator {
 			)
 		);
 
+		// Résultats PII actifs par type de pattern.
+		$pii_by_pattern = $wpdb->get_results(
+			"SELECT pattern_type, COUNT(*) AS total
+			FROM {$wpdb->prefix}omniprivacy_scan_results
+			WHERE status = 'active'
+			GROUP BY pattern_type
+			ORDER BY total DESC"
+		);
+
+		$pii_total = 0;
+		foreach ( $pii_by_pattern as $row ) {
+			$pii_total += (int) $row->total;
+		}
+
+		// Statistiques du registre des consentements.
+		$consent_stats = $wpdb->get_results(
+			"SELECT action, COUNT(*) AS total
+			FROM {$wpdb->prefix}omniprivacy_consent_log
+			GROUP BY action"
+		);
+
+		$consent_total = 0;
+		foreach ( $consent_stats as $row ) {
+			$consent_total += (int) $row->total;
+		}
+
+		// Intégrité du registre.
+		$consent_log  = new OmniPrivacy_Consent_Log();
+		$integrity    = $consent_log->verify_integrity();
+
 		return array(
-			'score'       => $score,
-			'cleanups'    => $cleanups,
-			'requests'    => $requests,
-			'generated'   => current_time( 'mysql' ),
-			'plugin_ver'  => OMNIPRIVACY_VERSION,
-			'site_name'   => get_bloginfo( 'name' ),
-			'site_url'    => home_url(),
+			'score'           => $score,
+			'cleanups'        => $cleanups,
+			'requests'        => $requests,
+			'pii_by_pattern'  => $pii_by_pattern,
+			'pii_total'       => $pii_total,
+			'consent_stats'   => $consent_stats,
+			'consent_total'   => $consent_total,
+			'consent_valid'   => $integrity['is_valid'],
+			'generated'       => current_time( 'mysql' ),
+			'plugin_ver'      => OMNIPRIVACY_VERSION,
+			'site_name'       => get_bloginfo( 'name' ),
+			'site_url'        => home_url(),
 		);
 	}
 
@@ -171,34 +206,85 @@ class OmniPrivacy_PDF_Generator {
 			<h2><?php esc_html_e( 'Score de conformité', 'omniprivacy-pro' ); ?></h2>
 			<p class="score"><?php echo absint( $data['score'] ); ?>/100</p>
 
-			<h2><?php esc_html_e( 'Historique des nettoyages', 'omniprivacy-pro' ); ?></h2>
-			<table>
-				<tr><th><?php esc_html_e( 'Action', 'omniprivacy-pro' ); ?></th><th><?php esc_html_e( 'Date', 'omniprivacy-pro' ); ?></th></tr>
-				<?php foreach ( $data['cleanups'] as $cleanup ) : ?>
+			<h2><?php esc_html_e( 'Données personnelles détectées (PII)', 'omniprivacy-pro' ); ?></h2>
+			<?php if ( ! empty( $data['pii_by_pattern'] ) ) : ?>
+				<p><?php printf( esc_html__( 'Total actif : %d', 'omniprivacy-pro' ), absint( $data['pii_total'] ) ); ?></p>
+				<table>
 					<tr>
-						<td><?php echo esc_html( $cleanup->action ); ?></td>
-						<td><?php echo esc_html( $cleanup->created_at ); ?></td>
+						<th><?php esc_html_e( 'Type de pattern', 'omniprivacy-pro' ); ?></th>
+						<th><?php esc_html_e( 'Occurrences', 'omniprivacy-pro' ); ?></th>
 					</tr>
-				<?php endforeach; ?>
-			</table>
+					<?php foreach ( $data['pii_by_pattern'] as $row ) : ?>
+						<tr>
+							<td><?php echo esc_html( $row->pattern_type ); ?></td>
+							<td><?php echo absint( $row->total ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+			<?php else : ?>
+				<p><?php esc_html_e( 'Aucune donnée personnelle active détectée.', 'omniprivacy-pro' ); ?></p>
+			<?php endif; ?>
+
+			<h2><?php esc_html_e( 'Registre des consentements', 'omniprivacy-pro' ); ?></h2>
+			<p>
+				<?php printf( esc_html__( 'Entrées totales : %d', 'omniprivacy-pro' ), absint( $data['consent_total'] ) ); ?><br/>
+				<?php if ( $data['consent_valid'] ) : ?>
+					<strong style="color: #46b450;"><?php esc_html_e( 'Intégrité vérifiée', 'omniprivacy-pro' ); ?></strong>
+				<?php else : ?>
+					<strong style="color: #dc3232;"><?php esc_html_e( 'ATTENTION : incohérences détectées', 'omniprivacy-pro' ); ?></strong>
+				<?php endif; ?>
+			</p>
+			<?php if ( ! empty( $data['consent_stats'] ) ) : ?>
+				<table>
+					<tr>
+						<th><?php esc_html_e( 'Action', 'omniprivacy-pro' ); ?></th>
+						<th><?php esc_html_e( 'Total', 'omniprivacy-pro' ); ?></th>
+					</tr>
+					<?php foreach ( $data['consent_stats'] as $row ) : ?>
+						<tr>
+							<td><?php echo esc_html( ucfirst( $row->action ) ); ?></td>
+							<td><?php echo absint( $row->total ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+			<?php endif; ?>
+
+			<h2><?php esc_html_e( 'Historique des nettoyages', 'omniprivacy-pro' ); ?></h2>
+			<?php if ( ! empty( $data['cleanups'] ) ) : ?>
+				<table>
+					<tr><th><?php esc_html_e( 'Action', 'omniprivacy-pro' ); ?></th><th><?php esc_html_e( 'Date', 'omniprivacy-pro' ); ?></th></tr>
+					<?php foreach ( $data['cleanups'] as $cleanup ) : ?>
+						<tr>
+							<td><?php echo esc_html( $cleanup->action ); ?></td>
+							<td><?php echo esc_html( $cleanup->created_at ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+			<?php else : ?>
+				<p><?php esc_html_e( 'Aucun nettoyage enregistré.', 'omniprivacy-pro' ); ?></p>
+			<?php endif; ?>
 
 			<h2><?php esc_html_e( 'Demandes utilisateurs', 'omniprivacy-pro' ); ?></h2>
-			<table>
-				<tr>
-					<th>#</th>
-					<th><?php esc_html_e( 'Statut', 'omniprivacy-pro' ); ?></th>
-					<th><?php esc_html_e( 'Créée', 'omniprivacy-pro' ); ?></th>
-					<th><?php esc_html_e( 'Traitée', 'omniprivacy-pro' ); ?></th>
-				</tr>
-				<?php foreach ( $data['requests'] as $request ) : ?>
+			<?php if ( ! empty( $data['requests'] ) ) : ?>
+				<table>
 					<tr>
-						<td><?php echo absint( $request->id ); ?></td>
-						<td><?php echo esc_html( $request->status ); ?></td>
-						<td><?php echo esc_html( $request->created_at ); ?></td>
-						<td><?php echo esc_html( $request->processed_at ?: '—' ); ?></td>
+						<th>#</th>
+						<th><?php esc_html_e( 'Statut', 'omniprivacy-pro' ); ?></th>
+						<th><?php esc_html_e( 'Créée', 'omniprivacy-pro' ); ?></th>
+						<th><?php esc_html_e( 'Traitée', 'omniprivacy-pro' ); ?></th>
 					</tr>
-				<?php endforeach; ?>
-			</table>
+					<?php foreach ( $data['requests'] as $request ) : ?>
+						<tr>
+							<td><?php echo absint( $request->id ); ?></td>
+							<td><?php echo esc_html( $request->status ); ?></td>
+							<td><?php echo esc_html( $request->created_at ); ?></td>
+							<td><?php echo esc_html( $request->processed_at ?: '—' ); ?></td>
+						</tr>
+					<?php endforeach; ?>
+				</table>
+			<?php else : ?>
+				<p><?php esc_html_e( 'Aucune demande enregistrée.', 'omniprivacy-pro' ); ?></p>
+			<?php endif; ?>
 		</body>
 		</html>
 		<?php
